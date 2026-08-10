@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Camera, ChevronLeft, Eye, EyeOff } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import { createClient } from "@/lib/supabase/client";
 import type { Category } from "@/lib/types";
@@ -86,24 +87,30 @@ export default function NewComplaintPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4">
+    <div className="mx-auto max-w-lg px-4">
       <NavBar />
-      <h1 className="text-lg font-semibold">File a complaint</h1>
+      <button
+        onClick={() => router.back()}
+        className="mb-3 flex items-center gap-1 text-xs font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+      >
+        <ChevronLeft className="h-4 w-4" /> Back
+      </button>
+      <h1 className="text-xl font-semibold tracking-tight">File a complaint</h1>
       {leftToday !== null && (
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-zinc-400">
           {leftToday > 0
             ? `${leftToday} complaint${leftToday > 1 ? "s" : ""} left today`
             : "Daily limit reached"}
         </p>
       )}
 
-      <div className="mt-4 space-y-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="card mt-4 space-y-4 p-4">
         <div>
-          <label className="text-xs font-medium text-gray-500">Category</label>
+          <label className="section-label">Category</label>
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 dark:border-gray-700 dark:bg-gray-800"
+            className="input mt-1.5"
           >
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
@@ -114,61 +121,73 @@ export default function NewComplaintPage() {
         </div>
 
         <div>
-          <label className="text-xs font-medium text-gray-500">Title</label>
+          <label className="section-label">Title</label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={120}
             placeholder="e.g. Roti was served cold"
-            className="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 dark:border-gray-700 dark:bg-gray-800"
+            className="input mt-1.5"
           />
         </div>
 
         <div>
-          <label className="text-xs font-medium text-gray-500">Description</label>
+          <label className="section-label">Description</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             maxLength={2000}
             rows={4}
             placeholder="Describe the issue — what happened, when, which meal…"
-            className="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 dark:border-gray-700 dark:bg-gray-800"
+            className="input mt-1.5 resize-none"
           />
         </div>
 
         <div>
-          <label className="text-xs font-medium text-gray-500">
-            Photos (optional, max 2)
-          </label>
+          <label className="section-label">Photos (optional, max 2)</label>
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="mt-1.5 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-300 py-4 text-sm text-zinc-500 transition hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+          >
+            <Camera className="h-4 w-4" />
+            {photos.length > 0 ? `${photos.length} photo${photos.length > 1 ? "s" : ""} selected` : "Add photos"}
+          </button>
           <input
             ref={fileRef}
             type="file"
             accept="image/*"
             multiple
-            onChange={(e) =>
-              setPhotos(Array.from(e.target.files ?? []).slice(0, 2))
-            }
-            className="mt-1 block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-gray-600 dark:file:bg-gray-800 dark:file:text-gray-300"
+            onChange={(e) => setPhotos(Array.from(e.target.files ?? []).slice(0, 2))}
+            className="hidden"
           />
           {photos.length > 0 && (
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1.5 truncate text-xs text-zinc-400">
               {photos.map((p) => p.name).join(", ")}
             </p>
           )}
         </div>
 
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={anonymous}
-            onChange={(e) => setAnonymous(e.target.checked)}
-            className="h-4 w-4 accent-emerald-600"
-          />
-          Post anonymously (committee still sees your name)
-        </label>
+        <button
+          type="button"
+          onClick={() => setAnonymous(!anonymous)}
+          className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-3 text-sm transition ${
+            anonymous
+              ? "border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900"
+              : "border-zinc-200 text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-300"
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            {anonymous ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            Post anonymously
+          </span>
+          <span className={`text-[11px] ${anonymous ? "text-white/70 dark:text-zinc-600" : "text-zinc-400"}`}>
+            committee still sees your name
+          </span>
+        </button>
 
         {error && (
-          <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">
+          <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">
             {error}
           </div>
         )}
@@ -176,7 +195,7 @@ export default function NewComplaintPage() {
         <button
           onClick={submit}
           disabled={saving || (leftToday !== null && leftToday <= 0)}
-          className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
+          className="btn-primary w-full py-3 disabled:opacity-40"
         >
           {saving ? "Submitting…" : "Submit complaint"}
         </button>

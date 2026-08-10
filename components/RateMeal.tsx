@@ -2,10 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Star, Check } from "lucide-react";
 import Stars from "./Stars";
 import { createClient } from "@/lib/supabase/client";
 import type { Meal } from "@/lib/types";
-import { isMealOpen, windowLabel } from "@/lib/meal";
+import { isMealOpen, windowLabel, mealEmoji } from "@/lib/meal";
 
 type Props = {
   meal: Meal;
@@ -43,56 +44,73 @@ export default function RateMeal({
     });
     setSaving(false);
     if (error) {
-      setError(error.message.includes("duplicate")
-        ? "You already rated this meal today."
-        : "Rating not submitted. The meal window may be closed.");
+      setError(
+        error.message.includes("duplicate")
+          ? "You already rated this meal today."
+          : "Rating not submitted. The meal window may be closed.",
+      );
       return;
     }
     router.refresh();
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold">{meal.name}</h3>
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-              {windowLabel(meal)}
-            </span>
+    <div className="card card-hover p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-zinc-50 text-2xl ring-1 ring-zinc-100 dark:bg-zinc-900 dark:ring-zinc-800">
+            {mealEmoji(meal)}
           </div>
-          <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-500">
-            <span className="text-amber-500">★</span>
-            {avg !== null ? `${avg.toFixed(1)} avg` : "no ratings yet"}
-            {count > 0 ? ` · ${count} rated` : ""}
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold tracking-tight">
+                {meal.name}
+              </h3>
+              <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                {windowLabel(meal)}
+              </span>
+            </div>
+            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500">
+              {avg !== null ? (
+                <>
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                    {avg.toFixed(1)}
+                  </span>
+                  <span>· {count} rated</span>
+                </>
+              ) : (
+                <span className="text-zinc-400">no ratings yet</span>
+              )}
+            </div>
           </div>
         </div>
 
         {ratedToday !== null ? (
-          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-            Rated ★{ratedToday}
+          <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-400 dark:ring-emerald-900">
+            <Check className="h-3 w-3" /> Rated {ratedToday}★
           </span>
         ) : !open ? (
-          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-400 dark:bg-gray-800">
-            Closed
+          <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-medium text-zinc-400 dark:bg-zinc-800">
+            Window closed
           </span>
         ) : null}
       </div>
 
       {open && ratedToday === null && messId === null && (
-        <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900">
           Pick your mess in Profile to rate meals.
         </p>
       )}
 
       {open && ratedToday === null && messId !== null && (
-        <div className="mt-3">
+        <div className="mt-4 border-t border-zinc-100 pt-3 dark:border-zinc-800">
           <div className="flex items-center justify-between gap-3">
             <Stars value={rating ?? 0} onChange={setRating} />
             <button
               onClick={submit}
               disabled={!rating || saving}
-              className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-emerald-700 disabled:opacity-40"
+              className="btn-accent px-4 py-1.5 text-xs disabled:opacity-40"
             >
               {saving ? "Saving…" : "Submit"}
             </button>
@@ -102,7 +120,7 @@ export default function RateMeal({
             onChange={(e) => setComment(e.target.value)}
             maxLength={200}
             placeholder="Optional note (e.g. dal was salty)"
-            className="mt-2 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-emerald-500 dark:border-gray-700 dark:bg-gray-800"
+            className="input mt-2 text-xs"
           />
           {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
         </div>

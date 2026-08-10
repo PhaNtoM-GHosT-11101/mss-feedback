@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PartyPopper, Send } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/format";
@@ -51,24 +52,27 @@ export default function PraisePage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4">
+    <div className="mx-auto max-w-lg px-4">
       <NavBar />
-      <h1 className="text-lg font-semibold">Praise wall 👏</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
+        <PartyPopper className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+        Praise wall
+      </h1>
+      <p className="mt-1 text-sm text-zinc-500">
         Thank the mess staff for a great meal or hard work.
       </p>
 
-      <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="card mt-4 p-4">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           maxLength={500}
           rows={2}
           placeholder="e.g. Great breakfast today, chai was perfect!"
-          className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 dark:border-gray-700 dark:bg-gray-800"
+          className="input resize-none"
         />
-        <div className="mt-2 flex items-center justify-between">
-          <label className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="mt-2.5 flex items-center justify-between">
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-500">
             <input
               type="checkbox"
               checked={anonymous}
@@ -80,8 +84,9 @@ export default function PraisePage() {
           <button
             onClick={submit}
             disabled={saving || text.trim().length < 2}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-40"
+            className="btn-primary flex items-center gap-1.5 px-3.5 py-2 text-xs disabled:opacity-40"
           >
+            <Send className="h-3.5 w-3.5" />
             {saving ? "Posting…" : "Post praise"}
           </button>
         </div>
@@ -90,19 +95,16 @@ export default function PraisePage() {
 
       <div className="mt-4 space-y-2">
         {praises.map((p) => (
-          <div
-            key={p.id}
-            className="rounded-xl border border-gray-200 bg-white p-3.5 text-sm dark:border-gray-800 dark:bg-gray-900"
-          >
+          <div key={p.id} className="card p-3.5 text-sm">
             <p>{p.text}</p>
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-zinc-400">
               {p.is_anonymous || !p.praise_author ? "Anonymous" : p.praise_author} ·{" "}
               {timeAgo(p.created_at)}
             </p>
           </div>
         ))}
         {praises.length === 0 && (
-          <p className="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-400 dark:border-gray-700">
+          <p className="card border-dashed p-6 text-center text-sm text-zinc-400">
             No praise yet — be the first!
           </p>
         )}

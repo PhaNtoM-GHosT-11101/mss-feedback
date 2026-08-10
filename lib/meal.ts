@@ -1,5 +1,14 @@
 import type { Meal } from "./types";
 
+export function mealEmoji(meal: { name: string }): string {
+  const n = meal.name.toLowerCase();
+  if (/morning|breakfast|सुबह/.test(n)) return "🍞";
+  if (/afternoon|lunch|दोपहर/.test(n)) return "🍛";
+  if (/evening|snack|tea|शाम/.test(n)) return "🍵";
+  if (/night|dinner|रात/.test(n)) return "🍜";
+  return "🍽️";
+}
+
 export function isMealOpen(meal: Meal, date = new Date()): boolean {
   const hour = Number(
     new Intl.DateTimeFormat("en-GB", {

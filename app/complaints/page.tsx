@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ArrowUp, Pin, Plus, Search } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import { createClient } from "@/lib/supabase/client";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
@@ -72,32 +73,32 @@ export default function ComplaintsPage() {
   }, [complaints, filters]);
 
   const chip = (active: boolean) =>
-    `rounded-full px-3 py-1.5 text-xs font-medium transition ${
+    `shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
       active
-        ? "bg-emerald-600 text-white"
-        : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
+        ? "border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900"
+        : "border-zinc-200 bg-transparent text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-300"
     }`;
 
   return (
-    <div className="mx-auto max-w-3xl px-4">
+    <div className="mx-auto max-w-lg px-4">
       <NavBar />
 
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Complaints</h1>
-        <Link
-          href="/complaints/new"
-          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-700"
-        >
-          + New
+        <h1 className="text-xl font-semibold tracking-tight">Complaints</h1>
+        <Link href="/complaints/new" className="btn-primary flex items-center gap-1.5 px-3.5 py-2 text-xs">
+          <Plus className="h-3.5 w-3.5" /> New
         </Link>
       </div>
 
-      <input
-        value={filters.q}
-        onChange={(e) => setFilters({ ...filters, q: e.target.value })}
-        placeholder="Search complaints…"
-        className="mt-3 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-emerald-500 dark:border-gray-800 dark:bg-gray-900"
-      />
+      <div className="relative mt-4">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+        <input
+          value={filters.q}
+          onChange={(e) => setFilters({ ...filters, q: e.target.value })}
+          placeholder="Search complaints…"
+          className="input pl-9"
+        />
+      </div>
 
       <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
         <button className={chip(filters.status === "all")} onClick={() => setFilters({ ...filters, status: "all" })}>
@@ -121,13 +122,17 @@ export default function ComplaintsPage() {
         ))}
       </div>
 
-      <div className="mt-3 flex items-center justify-end gap-2 text-xs text-gray-500">
-        <span>Sort:</span>
+      <div className="mt-4 flex items-center justify-end gap-3 text-xs text-zinc-500">
+        <span className="section-label">Sort</span>
         {(["upvotes", "newest"] as const).map((s) => (
           <button
             key={s}
             onClick={() => setFilters({ ...filters, sort: s })}
-            className={filters.sort === s ? "font-semibold text-emerald-600 dark:text-emerald-400" : ""}
+            className={
+              filters.sort === s
+                ? "font-semibold text-zinc-900 dark:text-white"
+                : "hover:text-zinc-700 dark:hover:text-zinc-300"
+            }
           >
             {s === "upvotes" ? "Most upvoted" : "Newest"}
           </button>
@@ -135,9 +140,9 @@ export default function ComplaintsPage() {
       </div>
 
       <div className="mt-3 space-y-2">
-        {loading && <p className="py-8 text-center text-sm text-gray-400">Loading…</p>}
+        {loading && <p className="py-8 text-center text-sm text-zinc-400">Loading…</p>}
         {!loading && filtered.length === 0 && (
-          <p className="py-8 text-center text-sm text-gray-400">
+          <p className="card border-dashed p-8 text-center text-sm text-zinc-400">
             No complaints match.
           </p>
         )}
@@ -145,30 +150,28 @@ export default function ComplaintsPage() {
           <Link
             key={c.id}
             href={`/complaints/${c.id}`}
-            className="block rounded-xl border border-gray-200 bg-white p-3.5 transition hover:border-emerald-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-emerald-800"
+            className="card card-hover group flex items-start gap-3 p-3.5"
           >
-            <div className="flex items-start gap-3">
-              <div className="flex shrink-0 flex-col items-center rounded-lg bg-gray-50 px-2.5 py-1.5 dark:bg-gray-800">
-                <span className="text-sm font-bold leading-tight">{c.upvote_count}</span>
-                <span className="text-[10px] leading-none text-gray-400">▲</span>
+            <div className="flex shrink-0 flex-col items-center rounded-lg bg-zinc-50 px-2.5 py-1.5 dark:bg-zinc-900">
+              <span className="text-sm font-bold leading-tight">{c.upvote_count}</span>
+              <ArrowUp className="h-3 w-3 text-zinc-400" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                {c.is_pinned && <Pin className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />}
+                <p className="truncate text-sm font-medium">{c.title}</p>
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  {c.is_pinned && <span className="text-xs">📌</span>}
-                  <p className="truncate text-sm font-medium">{c.title}</p>
-                </div>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-400">
-                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${statusColor(c.status)}`}>
-                    {statusLabel(c.status)}
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${statusColor(c.status)}`}>
+                  {statusLabel(c.status)}
+                </span>
+                {c.category?.name && (
+                  <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] dark:bg-zinc-800">
+                    {c.category.name}
                   </span>
-                  {c.category?.name && (
-                    <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] dark:bg-gray-800">
-                      {c.category.name}
-                    </span>
-                  )}
-                  {c.complaint_author && <span className="truncate">{c.complaint_author}</span>}
-                  <span>{timeAgo(c.created_at)}</span>
-                </div>
+                )}
+                {c.complaint_author && <span className="truncate">{c.complaint_author}</span>}
+                <span>{timeAgo(c.created_at)}</span>
               </div>
             </div>
           </Link>

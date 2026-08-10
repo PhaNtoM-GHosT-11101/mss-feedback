@@ -3,6 +3,13 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  ArrowUp,
+  ChevronLeft,
+  Flag,
+  Pin,
+  Trash2,
+} from "lucide-react";
 import NavBar from "@/components/NavBar";
 import { createClient } from "@/lib/supabase/client";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
@@ -162,60 +169,61 @@ export default function ComplaintDetailPage({
 
   if (!complaint) {
     return (
-      <div className="mx-auto max-w-3xl px-4">
+      <div className="mx-auto max-w-lg px-4">
         <NavBar />
-        <p className="py-10 text-center text-sm text-gray-400">Loading…</p>
+        <p className="py-10 text-center text-sm text-zinc-400">Loading…</p>
       </div>
     );
   }
 
-  const mine = myId !== null; // reserved: committee/super-admin controls elsewhere
-
   return (
-    <div className="mx-auto max-w-3xl px-4">
+    <div className="mx-auto max-w-lg px-4">
       <NavBar />
-      <Link href="/complaints" className="text-xs text-gray-400 hover:text-gray-600">
-        ← All complaints
-      </Link>
+      <button
+        onClick={() => router.back()}
+        className="mb-3 flex items-center gap-1 text-xs font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+      >
+        <ChevronLeft className="h-4 w-4" /> All complaints
+      </button>
 
-      <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center gap-2">
-          {complaint.is_pinned && <span>📌</span>}
+      <div className="card p-4">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {complaint.is_pinned && <Pin className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />}
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusColor(complaint.status)}`}>
             {statusLabel(complaint.status)}
           </span>
           {category && (
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
               {category.name}
             </span>
           )}
           {mess && (
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
               {mess.name}
             </span>
           )}
         </div>
 
-        <h1 className="mt-2 text-lg font-semibold">{complaint.title}</h1>
-        <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">
+        <h1 className="mt-2.5 text-lg font-semibold tracking-tight">{complaint.title}</h1>
+        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
           {complaint.description}
         </p>
 
         {complaint.photo_urls.length > 0 && (
-          <div className="mt-3 flex gap-2 overflow-x-auto">
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-0.5">
             {complaint.photo_urls.map((u) => (
               <img
                 key={u}
                 src={u}
                 alt="complaint evidence"
-                className="h-28 w-28 rounded-lg object-cover"
+                className="h-28 w-28 shrink-0 rounded-lg object-cover ring-1 ring-zinc-100 dark:ring-zinc-800"
               />
             ))}
           </div>
         )}
 
-        <div className="mt-3 flex items-center gap-3 text-xs text-gray-400">
-          <span>
+        <div className="mt-3 flex items-center gap-2 text-xs text-zinc-400">
+          <span className="font-medium text-zinc-600 dark:text-zinc-300">
             {complaint.is_anonymous || !complaint.complaint_author
               ? "Anonymous"
               : `${complaint.complaint_author}${complaint.complaint_author_roll ? ` (${complaint.complaint_author_roll})` : ""}`}
@@ -225,34 +233,35 @@ export default function ComplaintDetailPage({
         </div>
 
         {complaint.status === "resolved" && complaint.resolution_note && (
-          <div className="mt-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+          <div className="mt-3 rounded-xl border border-emerald-200/70 bg-emerald-50/70 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
             <span className="font-semibold">Resolved:</span> {complaint.resolution_note}
           </div>
         )}
 
-        <div className="mt-4 flex items-center gap-3 border-t border-gray-100 pt-3 dark:border-gray-800">
+        <div className="mt-4 flex items-center gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
           <button
             onClick={toggleUpvote}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+            className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
               upvoted
-                ? "bg-emerald-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200"
+                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200"
             }`}
           >
-            ▲ {complaint.upvote_count} {complaint.upvote_count === 1 ? "upvote" : "upvotes"}
+            <ArrowUp className={`h-4 w-4 ${upvoted ? "" : ""}`} />
+            {complaint.upvote_count}
           </button>
           <button
             onClick={flagComplaint}
-            className="ml-auto rounded-lg px-3 py-1.5 text-xs text-gray-400 hover:text-red-500"
+            className="ml-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:text-red-500"
           >
-            🚩 Report
+            <Flag className="h-3.5 w-3.5" /> Report
           </button>
           {showDelete && (
             <button
               onClick={deleteComplaint}
-              className="rounded-lg px-3 py-1.5 text-xs text-red-400 hover:text-red-600"
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-400 transition hover:text-red-600"
             >
-              Delete
+              <Trash2 className="h-3.5 w-3.5" /> Delete
             </button>
           )}
         </div>
@@ -261,20 +270,18 @@ export default function ComplaintDetailPage({
         {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
       </div>
 
-      <h2 className="mb-2 mt-6 text-sm font-semibold text-gray-500 dark:text-gray-400">
-        Comments ({comments.length})
-      </h2>
+      <h2 className="section-label mb-3 mt-8">Comments ({comments.length})</h2>
       <div className="space-y-2">
         {comments.map((cm) => (
-          <div key={cm.id} className="rounded-xl border border-gray-200 bg-white p-3 text-sm dark:border-gray-800 dark:bg-gray-900">
+          <div key={cm.id} className="card p-3 text-sm">
             <p>{cm.body}</p>
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-zinc-400">
               {cm.comment_author ?? "Unknown"} · {timeAgo(cm.created_at)}
             </p>
           </div>
         ))}
         {comments.length === 0 && (
-          <p className="rounded-xl border border-dashed border-gray-300 p-4 text-center text-sm text-gray-400 dark:border-gray-700">
+          <p className="card border-dashed p-5 text-center text-sm text-zinc-400">
             No comments yet.
           </p>
         )}
@@ -286,12 +293,12 @@ export default function ComplaintDetailPage({
           onChange={(e) => setNewComment(e.target.value)}
           maxLength={500}
           placeholder="Add a comment…"
-          className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-emerald-500 dark:border-gray-800 dark:bg-gray-900"
+          className="input flex-1"
         />
         <button
           onClick={addComment}
           disabled={!newComment.trim()}
-          className="rounded-xl bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-700 disabled:opacity-40 dark:bg-white dark:text-gray-900"
+          className="btn-primary px-4 text-xs disabled:opacity-40"
         >
           Post
         </button>
