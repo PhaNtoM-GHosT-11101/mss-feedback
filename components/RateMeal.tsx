@@ -36,9 +36,14 @@ export default function RateMeal({
     setSaving(true);
     setError(null);
     const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
     const { error } = await supabase.from("ratings").insert({
       meal_id: meal.id,
       mess_id: messId,
+      user_id: user.id,
       stars: rating,
       comment: comment.trim() || null,
     });

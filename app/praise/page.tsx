@@ -31,7 +31,12 @@ export default function PraisePage() {
     setSaving(true);
     setError(null);
     const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
     const { error } = await supabase.from("praises").insert({
+      user_id: user.id,
       text: text.trim(),
       is_anonymous: anonymous,
     });

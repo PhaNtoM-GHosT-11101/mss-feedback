@@ -18,10 +18,21 @@ export default function NewComplaintPage() {
   const [leftToday, setLeftToday] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [messId, setMessId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        supabase
+          .from("profiles")
+          .select("mess_id")
+          .eq("id", data.user.id)
+          .single()
+          .then(({ data: p }) => setMessId(p?.mess_id ?? null));
+      }
+    });
     supabase
       .from("complaint_categories")
       .select("*")
@@ -65,7 +76,14 @@ export default function NewComplaintPage() {
       );
     }
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { error } = await supabase.from("complaints").insert({
+      user_id: user.id,
+      mess_id: messId,
       category_id: categoryId,
       title: title.trim(),
       description: description.trim(),
