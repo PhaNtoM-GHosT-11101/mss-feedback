@@ -14,6 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://gmkzcxvgbhhvznbkxlae.supabase.co" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://gmkzcxvgbhhvznbkxlae.supabase.co" />
+      </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
         {children}
       </body>

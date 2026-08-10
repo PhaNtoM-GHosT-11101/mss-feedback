@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { ArrowUpRight, Plus, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import NavBar from "@/components/NavBar";
 import RateMeal from "@/components/RateMeal";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
@@ -9,6 +11,42 @@ import { todayISO, todayMenuItems } from "@/lib/meal";
 import type { Complaint, Meal, Praise } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+const getShared = unstable_cache(
+  async (today: string, dow: number) => {
+    const db = createAdminClient();
+    const [meals, menuRaw, ratingsToday, announcements, top, praises] =
+      await Promise.all([
+        db.from("meals").select("*").eq("is_active", true).order("sort_order"),
+        db
+          .from("menu_items")
+          .select("*")
+          .or(`menu_date.eq.${today},and(is_template.eq.true,weekday.eq.${dow})`)
+          .limit(50),
+        db.from("ratings").select("meal_id, stars").eq("rating_date", today).limit(5000),
+        db
+          .from("announcements")
+          .select("*")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .limit(3),
+        db
+          .from("complaints")
+          .select("id, title, status, upvote_count, created_at, is_pinned, complaint_author, complaint_author_roll")
+          .order("is_pinned", { ascending: false })
+          .order("upvote_count", { ascending: false })
+          .limit(3),
+        db
+          .from("praises")
+          .select("id, text, is_anonymous, created_at, praise_author")
+          .order("created_at", { ascending: false })
+          .limit(3),
+      ]);
+    return { meals, menuRaw, ratingsToday, announcements, top, praises };
+  },
+  ["home-shared"],
+  { revalidate: 30 },
+);
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -18,20 +56,14 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profile }, { data: meals }, { data: myRatingsRaw }] =
-    await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id, full_name, roll_no, mess_id, is_banned")
-        .eq("id", user.id)
-        .single(),
-      supabase
-        .from("meals")
-        .select("*")
-        .eq("is_active", true)
-        .order("sort_order"),
-      supabase.rpc("my_ratings"),
-    ]);
+  const [{ data: profile }, { data: myRatingsRaw }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, full_name, roll_no, mess_id, is_banned")
+      .eq("id", user.id)
+      .single(),
+    supabase.rpc("my_ratings"),
+  ]);
 
   const messId = profile?.mess_id ?? null;
   if (messId === null) redirect("/onboard");
@@ -42,41 +74,11 @@ export default async function HomePage() {
   const today = todayISO();
   const dow = (new Date().getUTCDay() + 1) % 7;
 
-  const [{ data: menuRaw }, { data: ratingsToday }, { data: announcements }, top, praises] =
-    await Promise.all([
-      supabase
-        .from("menu_items")
-        .select("*")
-        .or(`menu_date.eq.${today},and(is_template.eq.true,weekday.eq.${dow})`)
-        .limit(50),
-      supabase
-        .from("ratings")
-        .select("meal_id, stars")
-        .eq("rating_date", today)
-        .limit(5000),
-      supabase
-        .from("announcements")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(3),
-      supabase
-        .from("complaints")
-        .select(
-          "id, title, status, upvote_count, created_at, is_pinned, complaint_author, complaint_author_roll",
-        )
-        .order("is_pinned", { ascending: false })
-        .order("upvote_count", { ascending: false })
-        .limit(3),
-      supabase
-        .from("praises")
-        .select("id, text, is_anonymous, created_at, praise_author")
-        .order("created_at", { ascending: false })
-        .limit(3),
-    ]);
+  const { meals, menuRaw, ratingsToday, announcements, top, praises } =
+    await getShared(today, dow);
 
   const perMeal = new Map<string, { sum: number; count: number }>();
-  for (const row of (ratingsToday ?? []) as { meal_id: string; stars: number }[]) {
+  for (const row of (ratingsToday.data ?? []) as { meal_id: string; stars: number }[]) {
     const cur = perMeal.get(row.meal_id) ?? { sum: 0, count: 0 };
     cur.sum += row.stars;
     cur.count += 1;
@@ -87,7 +89,7 @@ export default async function HomePage() {
     averages.set(mealId, { avg: sum / count, count });
   }
 
-  const menu = todayMenuItems(menuRaw ?? []);
+  const menu = todayMenuItems(menuRaw.data ?? []);
   const menuByMeal = new Map<string, typeof menu>();
   for (const item of menu) {
     const list = menuByMeal.get(item.meal_id) ?? [];
@@ -99,9 +101,9 @@ export default async function HomePage() {
     <div className="mx-auto max-w-lg px-4">
       <NavBar userName={profile?.full_name} />
 
-      {announcements && announcements.length > 0 && (
+      {announcements.data && announcements.data.length > 0 && (
         <div className="mb-4 space-y-2">
-          {announcements.map((a) => (
+          {announcements.data.map((a) => (
             <div
               key={a.id}
               className="rounded-xl border border-emerald-200/70 bg-emerald-50/70 p-3.5 dark:border-emerald-900 dark:bg-emerald-950/40"
@@ -125,7 +127,7 @@ export default async function HomePage() {
         <span className="text-[11px] text-zinc-400">{today}</span>
       </div>
       <div className="space-y-3">
-        {(meals ?? []).map((meal: Meal) => {
+        {(meals.data ?? []).map((meal: Meal) => {
           const my = myRatings.find(
             (r: { meal_id: string }) => r.meal_id === meal.id,
           );
@@ -145,7 +147,7 @@ export default async function HomePage() {
 
       <h2 className="section-label mb-3 mt-8">Today&apos;s menu</h2>
       <div className="card p-4">
-        {(meals ?? []).map((meal: Meal, i: number) => {
+        {(meals.data ?? []).map((meal: Meal, i: number) => {
           const items = menuByMeal.get(meal.id) ?? [];
           return (
             <div

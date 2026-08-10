@@ -1,118 +1,53 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { PartyPopper, Send } from "lucide-react";
+import { redirect } from "next/navigation";
+import { Sparkles } from "lucide-react";
 import NavBar from "@/components/NavBar";
-import { createClient } from "@/lib/supabase/client";
+import PraiseForm from "./praise-form";
+import { createClient } from "@/lib/supabase/server";
 import { timeAgo } from "@/lib/format";
 import type { Praise } from "@/lib/types";
 
-export default function PraisePage() {
-  const router = useRouter();
-  const [praises, setPraises] = useState<Praise[]>([]);
-  const [text, setText] = useState("");
-  const [anonymous, setAnonymous] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export const dynamic = "force-dynamic";
 
-  useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from("praises")
-      .select("*, praise_author")
-      .order("created_at", { ascending: false })
-      .limit(100)
-      .then(({ data }) => setPraises(data ?? []));
-  }, []);
+export default async function PraisePage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
-  async function submit() {
-    if (text.trim().length < 2) return;
-    setSaving(true);
-    setError(null);
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-    const { error } = await supabase.from("praises").insert({
-      user_id: user.id,
-      text: text.trim(),
-      is_anonymous: anonymous,
-    });
-    setSaving(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    setText("");
-    setAnonymous(false);
-    router.refresh();
-    supabase
-      .from("praises")
-      .select("*, praise_author")
-      .order("created_at", { ascending: false })
-      .limit(100)
-      .then(({ data }) => setPraises(data ?? []));
-  }
+  const { data: praises } = await supabase
+    .from("praises")
+    .select("id, text, is_anonymous, created_at, praise_author")
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   return (
     <div className="mx-auto max-w-lg px-4">
       <NavBar />
+
       <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
-        <PartyPopper className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-        Praise wall
+        <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> Praise
       </h1>
-      <p className="mt-1 text-sm text-zinc-500">
-        Thank the mess staff for a great meal or hard work.
+      <p className="mt-1 text-xs text-zinc-400">
+        Thank the kitchen or mess staff — brighten someone&apos;s day.
       </p>
 
-      <div className="card mt-4 p-4">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          maxLength={500}
-          rows={2}
-          placeholder="e.g. Great breakfast today, chai was perfect!"
-          className="input resize-none"
-        />
-        <div className="mt-2.5 flex items-center justify-between">
-          <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-500">
-            <input
-              type="checkbox"
-              checked={anonymous}
-              onChange={(e) => setAnonymous(e.target.checked)}
-              className="h-3.5 w-3.5 accent-emerald-600"
-            />
-            Post anonymously
-          </label>
-          <button
-            onClick={submit}
-            disabled={saving || text.trim().length < 2}
-            className="btn-primary flex items-center gap-1.5 px-3.5 py-2 text-xs disabled:opacity-40"
-          >
-            <Send className="h-3.5 w-3.5" />
-            {saving ? "Posting…" : "Post praise"}
-          </button>
-        </div>
-        {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
-      </div>
+      <PraiseForm />
 
       <div className="mt-4 space-y-2">
-        {praises.map((p) => (
-          <div key={p.id} className="card p-3.5 text-sm">
-            <p>{p.text}</p>
-            <p className="mt-1 text-xs text-zinc-400">
-              {p.is_anonymous || !p.praise_author ? "Anonymous" : p.praise_author} ·{" "}
-              {timeAgo(p.created_at)}
-            </p>
-          </div>
-        ))}
-        {praises.length === 0 && (
-          <p className="card border-dashed p-6 text-center text-sm text-zinc-400">
+        {((praises as unknown as Praise[] | null) ?? []).length === 0 && (
+          <p className="card border-dashed p-8 text-center text-sm text-zinc-400">
             No praise yet — be the first!
           </p>
         )}
+        {((praises as unknown as Praise[] | null) ?? []).map((p) => (
+          <div key={p.id} className="card p-4">
+            <p className="text-sm leading-relaxed">{p.text}</p>
+            <p className="mt-2 text-xs text-zinc-400">
+              {p.is_anonymous ? "Anonymous" : p.praise_author} · {timeAgo(p.created_at)}
+            </p>
+          </div>
+        ))}
       </div>
       <div className="h-4" />
     </div>

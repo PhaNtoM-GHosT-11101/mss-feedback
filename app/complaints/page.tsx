@@ -1,83 +1,62 @@
-"use client";
-
-import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowUp, Pin, Plus, Search } from "lucide-react";
+import { redirect } from "next/navigation";
+import { ArrowUp, Pin, Plus } from "lucide-react";
 import NavBar from "@/components/NavBar";
-import { createClient } from "@/lib/supabase/client";
+import FilterBar from "./filters";
+import { createClient } from "@/lib/supabase/server";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
 import type { Category, Complaint } from "@/lib/types";
 
-type Filters = {
-  category: string;
-  status: string;
-  q: string;
-  sort: "upvotes" | "newest";
-};
+export const dynamic = "force-dynamic";
 
-export default function ComplaintsPage() {
-  const router = useRouter();
-  const [complaints, setComplaints] = useState<Complaint[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<Filters>({
-    category: "all",
-    status: "all",
-    q: "",
-    sort: "upvotes",
-  });
+export default async function ComplaintsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; category?: string; q?: string; sort?: string }>;
+}) {
+  const sp = await searchParams;
+  const status = ["new", "in_progress", "resolved"].includes(sp.status ?? "")
+    ? sp.status!
+    : "all";
+  const category = sp.category ?? "all";
+  const q = (sp.q ?? "").slice(0, 80);
+  const sort = sp.sort === "newest" ? "newest" : "upvotes";
 
-  useEffect(() => {
-    const supabase = createClient();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const [cats, list] = await Promise.all([
     supabase
       .from("complaint_categories")
       .select("*")
       .eq("is_active", true)
-      .order("sort_order")
-      .then(({ data }) => setCategories(data ?? []));
+      .order("sort_order"),
     supabase
       .from("complaints")
       .select(
         "id, title, status, upvote_count, created_at, is_pinned, is_anonymous, complaint_author, complaint_author_roll, category_id, category:complaint_categories(name), mess_id, mess:messes(name)",
       )
-      .limit(500)
-      .then(({ data }) => {
-        setComplaints((data ?? []) as unknown as Complaint[]);
-        setLoading(false);
-      });
-  }, []);
+      .eq("is_flagged", false)
+      .then(({ data, error }) => ({ data: data as unknown as Complaint[], error })),
+  ]);
 
-  const filtered = useMemo(() => {
-    let list = [...complaints];
-    if (filters.category !== "all") {
-      list = list.filter((c) => c.category_id === filters.category);
+  let complaints = (list.data ?? []).filter((c) => {
+    if (status !== "all" && c.status !== status) return false;
+    if (category !== "all" && c.category_id !== category) return false;
+    if (q) {
+      const text = (c.title + " " + c.description).toLowerCase();
+      if (!text.includes(q.toLowerCase())) return false;
     }
-    if (filters.status !== "all") {
-      list = list.filter((c) => c.status === filters.status);
-    }
-    if (filters.q.trim()) {
-      const q = filters.q.toLowerCase();
-      list = list.filter(
-        (c) =>
-          c.title.toLowerCase().includes(q) ||
-          c.description.toLowerCase().includes(q),
-      );
-    }
-    list.sort((a, b) => {
-      if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
-      if (filters.sort === "upvotes") return b.upvote_count - a.upvote_count;
-      return b.created_at.localeCompare(a.created_at);
-    });
-    return list;
-  }, [complaints, filters]);
-
-  const chip = (active: boolean) =>
-    `shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
-      active
-        ? "border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900"
-        : "border-zinc-200 bg-transparent text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-300"
-    }`;
+    return true;
+  });
+  complaints.sort((a, b) => {
+    if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+    if (sort === "upvotes") return b.upvote_count - a.upvote_count;
+    return b.created_at.localeCompare(a.created_at);
+  });
 
   return (
     <div className="mx-auto max-w-lg px-4">
@@ -90,63 +69,18 @@ export default function ComplaintsPage() {
         </Link>
       </div>
 
-      <div className="relative mt-4">
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-        <input
-          value={filters.q}
-          onChange={(e) => setFilters({ ...filters, q: e.target.value })}
-          placeholder="Search complaints…"
-          className="input pl-9"
-        />
-      </div>
-
-      <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-        <button className={chip(filters.status === "all")} onClick={() => setFilters({ ...filters, status: "all" })}>
-          All
-        </button>
-        {["new", "in_progress", "resolved"].map((s) => (
-          <button key={s} className={chip(filters.status === s)} onClick={() => setFilters({ ...filters, status: s })}>
-            {statusLabel(s)}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-        <button className={chip(filters.category === "all")} onClick={() => setFilters({ ...filters, category: "all" })}>
-          All categories
-        </button>
-        {categories.map((c) => (
-          <button key={c.id} className={chip(filters.category === c.id)} onClick={() => setFilters({ ...filters, category: c.id })}>
-            {c.name}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-4 flex items-center justify-end gap-3 text-xs text-zinc-500">
-        <span className="section-label">Sort</span>
-        {(["upvotes", "newest"] as const).map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilters({ ...filters, sort: s })}
-            className={
-              filters.sort === s
-                ? "font-semibold text-zinc-900 dark:text-white"
-                : "hover:text-zinc-700 dark:hover:text-zinc-300"
-            }
-          >
-            {s === "upvotes" ? "Most upvoted" : "Newest"}
-          </button>
-        ))}
-      </div>
+      <FilterBar
+        categories={(cats.data ?? []) as Category[]}
+        initial={{ status, category, q, sort }}
+      />
 
       <div className="mt-3 space-y-2">
-        {loading && <p className="py-8 text-center text-sm text-zinc-400">Loading…</p>}
-        {!loading && filtered.length === 0 && (
+        {complaints.length === 0 && (
           <p className="card border-dashed p-8 text-center text-sm text-zinc-400">
             No complaints match.
           </p>
         )}
-        {filtered.map((c) => (
+        {complaints.map((c) => (
           <Link
             key={c.id}
             href={`/complaints/${c.id}`}
