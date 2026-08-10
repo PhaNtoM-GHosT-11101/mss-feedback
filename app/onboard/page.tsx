@@ -13,6 +13,7 @@ export default function OnboardPage() {
   const [messId, setMessId] = useState("");
   const [rollNo, setRollNo] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -40,16 +41,19 @@ export default function OnboardPage() {
   async function finish() {
     if (!profile || !messId) return;
     setSaving(true);
+    setError(null);
     const supabase = createClient();
     const { error } = await supabase
       .from("profiles")
       .update({ mess_id: messId, roll_no: rollNo.trim() || null })
       .eq("id", profile.id);
     setSaving(false);
-    if (!error) {
-      router.push("/");
-      router.refresh();
+    if (error) {
+      setError(error.message);
+      return;
     }
+    router.push("/");
+    router.refresh();
   }
 
   return (
@@ -92,6 +96,12 @@ export default function OnboardPage() {
               className="input mt-1.5"
             />
           </div>
+
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">
+              {error}
+            </div>
+          )}
 
           <button
             onClick={finish}
