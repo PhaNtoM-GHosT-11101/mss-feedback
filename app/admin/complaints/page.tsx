@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCommittee } from "@/lib/admin-guard";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
+import SortToggle from "./sort-toggle";
 import {
   setComplaintStatus,
   togglePin,
@@ -12,17 +13,24 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminComplaintsPage() {
+export default async function AdminComplaintsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string }>;
+}) {
   await getCommittee();
   const db = createAdminClient();
+  const sp = await searchParams;
+  const sort = sp.sort === "latest" ? "latest" : "upvotes";
+
+  const complaintsQuery = db
+    .from("complaints")
+    .select("*, profiles!complaints_user_id_fkey(full_name, roll_no)")
+    .order("created_at", { ascending: false });
+  if (sort === "upvotes") complaintsQuery.order("upvote_count", { ascending: false });
 
   const [complaints, upvotes, comments, flags] = await Promise.all([
-    db
-      .from("complaints")
-      .select("*, profiles!complaints_user_id_fkey(full_name, roll_no)")
-      .order("upvote_count", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(200),
+    complaintsQuery.limit(200),
     db
       .from("complaint_upvotes")
       .select("complaint_id, user_id, profiles!complaint_upvotes_user_id_fkey(full_name)")
@@ -58,7 +66,10 @@ export default async function AdminComplaintsPage() {
 
   return (
     <div>
-      <h1 className="text-lg font-semibold">Complaints</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-lg font-semibold">Complaints</h1>
+        <SortToggle current={sort} />
+      </div>
 
       <div className="mt-4 space-y-3">
         {(complaints.data ?? []).map((c) => {
