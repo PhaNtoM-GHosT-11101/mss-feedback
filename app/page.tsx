@@ -87,7 +87,7 @@ export default async function HomePage() {
   );
 
   const today = todayISO();
-  const dow = (new Date().getUTCDay() + 1) % 7;
+  const dow = new Date().getUTCDay();
 
   const { meals, menuRaw, ratingsToday, announcements, top, praises } =
     await getShared(today, dow);

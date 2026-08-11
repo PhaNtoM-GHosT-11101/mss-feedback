@@ -12,16 +12,15 @@ export default async function AdminReportsPage() {
   since.setDate(since.getDate() - 30);
   const sinceISO = since.toISOString().slice(0, 10);
 
-  const [meals, dailyRatings, weekRatings, complaints, categories] = await Promise.all([
+  const [meals, dailyRatings, weekRatings, complaints] = await Promise.all([
     db.from("meals").select("*").eq("is_active", true).order("sort_order"),
     db
       .from("ratings")
-      .select("rating_date, meal_id, rating")
+      .select("rating_date, meal_id, stars")
       .gte("rating_date", sinceISO)
       .order("rating_date", { ascending: true }),
-    db.from("ratings").select("rating_date, meal_id, rating").gte("rating_date", "2026-01-01"),
+    db.from("ratings").select("rating_date, meal_id, stars").gte("rating_date", "2026-01-01"),
     db.from("complaints").select("*, category:complaint_categories!complaint_complaint_category_id_fkey(name)"),
-    db.from("complaint_categories").select("*"),
   ]);
 
   const mealIdName = new Map<string, string>();
@@ -116,21 +115,21 @@ export default async function AdminReportsPage() {
   );
 }
 
-function buildRatingsCSV(rows: { rating_date: string; meal_id: string; rating: number }[], mealIdName: Map<string, string>) {
+function buildRatingsCSV(rows: { rating_date: string; meal_id: string; stars: number }[], mealIdName: Map<string, string>) {
   const lines = ["date,meal,rating"];
   for (const r of rows) {
-    lines.push(`${r.rating_date},${mealIdName.get(r.meal_id) ?? r.meal_id},${r.rating}`);
+    lines.push(`${r.rating_date},${mealIdName.get(r.meal_id) ?? r.meal_id},${r.stars}`);
   }
   return lines.join("\n");
 }
 
 function buildComplaintsCSV(
-  rows: { id: string; created_at: string; title: string; status: string; upvotes_count: number; category: { name: string } | null }[]
+  rows: { id: string; created_at: string; title: string; status: string; upvote_count: number; category: { name: string } | null }[]
 ) {
   const lines = ["id,created,title,status,upvotes,category"];
   for (const c of rows) {
     const safe = c.title.replace(/"/g, '""');
-    lines.push(`"${c.id}","${c.created_at}","${safe}",${c.status},${c.upvotes_count},"${c.category?.name ?? ""}"`);
+    lines.push(`"${c.id}","${c.created_at}","${safe}",${c.status},${c.upvote_count},"${c.category?.name ?? ""}"`);
   }
   return lines.join("\n");
 }

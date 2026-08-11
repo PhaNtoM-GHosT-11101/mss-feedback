@@ -34,7 +34,7 @@ export function windowLabel(meal: Meal): string {
 export function todayMenuItems<T extends { menu_date: string | null; weekday: number | null; is_template: boolean }>(
   items: T[],
 ): T[] {
-  const dow = (new Date().getUTCDay() + 1) % 7; // JS: 0=Sun..6=Sat → SQL dow: 0=Sun..6=Sat
+  const dow = new Date().getUTCDay();
   return items.filter(
     (i) =>
       i.menu_date === todayISO() ||

@@ -9,6 +9,12 @@ async function adminDb() {
   return createAdminClient();
 }
 
+async function adminDbAsAdmin() {
+  const { isAdmin } = await getCommittee();
+  if (!isAdmin) throw new Error("Admin only");
+  return createAdminClient();
+}
+
 // ---------- Complaints ----------
 
 export async function setComplaintStatus(
@@ -84,13 +90,13 @@ export async function deleteComment(id: string) {
 // ---------- Users ----------
 
 export async function setUserBanned(userId: string, banned: boolean) {
-  const db = await adminDb();
+  const db = await adminDbAsAdmin();
   await db.from("profiles").update({ is_banned: banned }).eq("id", userId);
   revalidatePath("/admin/users");
 }
 
 export async function deleteUser(userId: string) {
-  const db = await adminDb();
+  const db = await adminDbAsAdmin();
   await db.auth.admin.deleteUser(userId);
   revalidatePath("/admin/users");
 }
@@ -99,7 +105,7 @@ export async function updateUserProfile(
   userId: string,
   data: { roll_no?: string | null; mess_id?: string | null; full_name?: string },
 ) {
-  const db = await adminDb();
+  const db = await adminDbAsAdmin();
   await db.from("profiles").update(data).eq("id", userId);
   revalidatePath("/admin/users");
 }
@@ -107,7 +113,7 @@ export async function updateUserProfile(
 // ---------- Roles ----------
 
 export async function addCommitteeMember(email: string, role: "committee" | "admin") {
-  const db = await adminDb();
+  const db = await adminDbAsAdmin();
   const { data: userList, error } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
   if (error) throw new Error(error.message);
   const match = userList?.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
@@ -117,7 +123,7 @@ export async function addCommitteeMember(email: string, role: "committee" | "adm
 }
 
 export async function removeCommitteeMember(userId: string) {
-  const db = await adminDb();
+  const db = await adminDbAsAdmin();
   await db.from("admin_members").delete().eq("user_id", userId);
   revalidatePath("/admin/settings");
 }

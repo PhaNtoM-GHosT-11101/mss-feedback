@@ -39,7 +39,7 @@ export default function ProfileEditor({
     const { error: err } = await supabase
       .from("profiles")
       .update({ roll_no: roll.trim().slice(0, 20), mess_id: mess })
-      .eq("user_id", user.id);
+      .eq("id", user.id);
     setBusy(false);
     if (err) {
       setError(err.message);

@@ -36,7 +36,7 @@ const getComplaints = unstable_cache(
     return (data ?? []) as unknown as Complaint[];
   },
   ["complaints-list"],
-  { revalidate: 30 },
+  { revalidate: 30, tags: ["complaint"] },
 );
 
 export default async function ComplaintsPage({
@@ -54,7 +54,7 @@ export default async function ComplaintsPage({
 
   const [cats, complaints] = await Promise.all([getCats(), getComplaints()]);
 
-  let list = complaints.filter((c) => {
+  const list = complaints.filter((c) => {
     if (status !== "all" && c.status !== status) return false;
     if (category !== "all" && c.category_id !== category) return false;
     if (q) {
