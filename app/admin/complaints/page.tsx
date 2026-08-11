@@ -19,7 +19,7 @@ export default async function AdminComplaintsPage() {
   const [complaints, upvotes, comments, flags] = await Promise.all([
     db
       .from("complaints")
-      .select("*, profiles!complaints_user_id_fkey(full_name, roll_no, email)")
+      .select("*, profiles!complaints_user_id_fkey(full_name, roll_no)")
       .order("created_at", { ascending: false })
       .limit(200),
     db
@@ -88,10 +88,11 @@ export default async function AdminComplaintsPage() {
               <p className="mt-2 text-xs text-gray-400">
                 By: {c.is_anonymous ? "🙈 Anonymous — " : ""}
                 <span className="font-medium text-gray-600 dark:text-gray-300">
-                  {(c.profiles as { full_name: string; roll_no: string | null; email: string } | null)?.full_name ?? "?"}
+                  {(c.profiles as { full_name: string; roll_no: string | null } | null)?.full_name ?? "?"}
                 </span>
-                {" ("}{(c.profiles as { roll_no: string | null; email: string } | null)?.roll_no ?? (c.profiles as { email: string } | null)?.email}
-                {")"}
+                {c.profiles && (
+                  <span>{" ("}{(c.profiles as { roll_no: string | null }).roll_no ?? "no roll no"}{")"}</span>
+                )}
                 {c.photo_urls.length > 0 && ` · 📷 ${c.photo_urls.length} photo${c.photo_urls.length > 1 ? "s" : ""}`}
               </p>
 
