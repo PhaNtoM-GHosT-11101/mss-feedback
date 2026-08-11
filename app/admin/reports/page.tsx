@@ -35,7 +35,7 @@ export default async function AdminReportsPage() {
       daily.set(r.rating_date, byMeal);
     }
     const agg = byMeal.get(r.meal_id) ?? { sum: 0, n: 0 };
-    agg.sum += r.rating;
+    agg.sum += r.stars;
     agg.n += 1;
     byMeal.set(r.meal_id, agg);
   }
