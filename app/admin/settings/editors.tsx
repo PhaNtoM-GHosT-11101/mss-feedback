@@ -282,11 +282,15 @@ export function MembersEditor({
     setError("");
     setDone("");
     try {
-      await addCommitteeMember(email.trim().toLowerCase(), role);
-      setEmail("");
-      setDone("Added.");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not add member — try again.");
+      const res = await addCommitteeMember(email.trim().toLowerCase(), role);
+      if (res.ok) {
+        setEmail("");
+        setDone("Added. They now have " + (role === "admin" ? "super-admin" : "committee") + " access.");
+      } else {
+        setError(res.error);
+      }
+    } catch {
+      setError("Could not add member — try again.");
     }
     setBusy(false);
     router.refresh();
@@ -328,7 +332,7 @@ export function MembersEditor({
         </button>
       </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
-      {done && <p className="text-xs text-emerald-500">{done} They now have {role === "admin" ? "super-admin" : "committee"} access.</p>}
+      {done && <p className="text-xs text-emerald-500">{done}</p>}
       <div className="space-y-2">
         {members.map((m) => (
           <div key={m.user_id} className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 p-2 text-sm dark:bg-gray-800">

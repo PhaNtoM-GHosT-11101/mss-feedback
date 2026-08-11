@@ -112,14 +112,18 @@ export async function updateUserProfile(
 
 // ---------- Roles ----------
 
-export async function addCommitteeMember(email: string, role: "committee" | "admin") {
+export async function addCommitteeMember(
+  email: string,
+  role: "committee" | "admin",
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const db = await adminDbAsAdmin();
   const { data: userList, error } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, error: "Could not load users. Try again." };
   const match = userList?.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-  if (!match) throw new Error("No user with that email. They must sign in once first.");
+  if (!match) return { ok: false, error: "No user with that email — they must sign in to the app once first." };
   await db.from("admin_members").upsert({ user_id: match.id, role });
   revalidatePath("/admin/settings");
+  return { ok: true };
 }
 
 export async function removeCommitteeMember(userId: string) {
