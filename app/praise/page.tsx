@@ -1,25 +1,29 @@
-import { redirect } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { Sparkles } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import PraiseForm from "./praise-form";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { timeAgo } from "@/lib/format";
 import type { Praise } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
+
+const getPraises = unstable_cache(
+  async () => {
+    const db = createAdminClient();
+    const { data } = await db
+      .from("praises")
+      .select("id, text, is_anonymous, created_at, praise_author")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    return (data ?? []) as unknown as Praise[];
+  },
+  ["praises-list"],
+  { revalidate: 30 },
+);
 
 export default async function PraisePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: praises } = await supabase
-    .from("praises")
-    .select("id, text, is_anonymous, created_at, praise_author")
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const praises = await getPraises();
 
   return (
     <div className="mx-auto max-w-lg px-4">
@@ -35,12 +39,12 @@ export default async function PraisePage() {
       <PraiseForm />
 
       <div className="mt-4 space-y-2">
-        {((praises as unknown as Praise[] | null) ?? []).length === 0 && (
+        {praises.length === 0 && (
           <p className="card border-dashed p-8 text-center text-sm text-zinc-400">
             No praise yet — be the first!
           </p>
         )}
-        {((praises as unknown as Praise[] | null) ?? []).map((p) => (
+        {praises.map((p) => (
           <div key={p.id} className="card p-4">
             <p className="text-sm leading-relaxed">{p.text}</p>
             <p className="mt-2 text-xs text-zinc-400">

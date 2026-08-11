@@ -45,7 +45,7 @@ const getShared = unstable_cache(
     return { meals, menuRaw, ratingsToday, announcements, top, praises };
   },
   ["home-shared"],
-  { revalidate: 30 },
+  { revalidate: 60 },
 );
 
 export default async function HomePage() {

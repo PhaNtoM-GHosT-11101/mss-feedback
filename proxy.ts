@@ -1,39 +1,44 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+function decodePayload(token: string): Record<string, unknown> | null {
+  const part = token.split(".")[1];
+  if (!part) return null;
+  let b64 = part.replace(/-/g, "+").replace(/_/g, "/");
+  while (b64.length % 4) b64 += "=";
+  try {
+    const binary = atob(b64);
+    const json = decodeURIComponent(
+      binary
+        .split("")
+        .map((c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0"))
+        .join(""),
+    );
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function hasValidSession(request: NextRequest): boolean {
+  for (const cookie of request.cookies.getAll()) {
+    if (!cookie.name.startsWith("sb-") || !cookie.name.endsWith("-auth-token")) {
+      continue;
+    }
+    const payload = decodePayload(cookie.value);
+    if (!payload) return false;
+    const exp = payload.exp;
+    if (typeof exp !== "number") return true;
+    return exp * 1000 > Date.now();
+  }
+  return false;
+}
+
 export async function proxy(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
-          );
-        },
-      },
-    },
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   const { pathname } = request.nextUrl;
 
-  if (!user) {
-    const protectedPaths = ["/login", "/auth/callback", "/auth/token"];
-    if (!protectedPaths.some((p) => pathname.startsWith(p))) {
+  if (!hasValidSession(request)) {
+    const publicPaths = ["/login", "/auth/callback", "/auth/token"];
+    if (!publicPaths.some((p) => pathname.startsWith(p))) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("next", pathname);
@@ -41,7 +46,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return supabaseResponse;
+  return NextResponse.next({ request });
 }
 
 export const config = {

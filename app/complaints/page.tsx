@@ -1,13 +1,43 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { ArrowUp, Pin, Plus } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import FilterBar from "./filters";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
 import type { Category, Complaint } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
+
+const getCats = unstable_cache(
+  async () => {
+    const db = createAdminClient();
+    const { data } = await db
+      .from("complaint_categories")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order");
+    return (data ?? []) as Category[];
+  },
+  ["complaint-categories"],
+  { revalidate: 300 },
+);
+
+const getComplaints = unstable_cache(
+  async () => {
+    const db = createAdminClient();
+    const { data } = await db
+      .from("complaints")
+      .select(
+        "id, title, status, upvote_count, created_at, is_pinned, is_anonymous, complaint_author, complaint_author_roll, category_id, category:complaint_categories(name), mess_id, mess:messes(name)",
+      )
+      .eq("is_flagged", false)
+      .limit(500);
+    return (data ?? []) as unknown as Complaint[];
+  },
+  ["complaints-list"],
+  { revalidate: 30 },
+);
 
 export default async function ComplaintsPage({
   searchParams,
@@ -22,28 +52,9 @@ export default async function ComplaintsPage({
   const q = (sp.q ?? "").slice(0, 80);
   const sort = sp.sort === "newest" ? "newest" : "upvotes";
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const [cats, complaints] = await Promise.all([getCats(), getComplaints()]);
 
-  const [cats, list] = await Promise.all([
-    supabase
-      .from("complaint_categories")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order"),
-    supabase
-      .from("complaints")
-      .select(
-        "id, title, status, upvote_count, created_at, is_pinned, is_anonymous, complaint_author, complaint_author_roll, category_id, category:complaint_categories(name), mess_id, mess:messes(name)",
-      )
-      .eq("is_flagged", false)
-      .then(({ data, error }) => ({ data: data as unknown as Complaint[], error })),
-  ]);
-
-  let complaints = (list.data ?? []).filter((c) => {
+  let list = complaints.filter((c) => {
     if (status !== "all" && c.status !== status) return false;
     if (category !== "all" && c.category_id !== category) return false;
     if (q) {
@@ -52,7 +63,7 @@ export default async function ComplaintsPage({
     }
     return true;
   });
-  complaints.sort((a, b) => {
+  list.sort((a, b) => {
     if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
     if (sort === "upvotes") return b.upvote_count - a.upvote_count;
     return b.created_at.localeCompare(a.created_at);
@@ -69,18 +80,15 @@ export default async function ComplaintsPage({
         </Link>
       </div>
 
-      <FilterBar
-        categories={(cats.data ?? []) as Category[]}
-        initial={{ status, category, q, sort }}
-      />
+      <FilterBar categories={cats} initial={{ status, category, q, sort }} />
 
       <div className="mt-3 space-y-2">
-        {complaints.length === 0 && (
+        {list.length === 0 && (
           <p className="card border-dashed p-8 text-center text-sm text-zinc-400">
             No complaints match.
           </p>
         )}
-        {complaints.map((c) => (
+        {list.map((c) => (
           <Link
             key={c.id}
             href={`/complaints/${c.id}`}

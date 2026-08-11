@@ -1,0 +1,5 @@
+{
+  "functions": {
+    "app/**/*.tsx": { "regions": ["bom1"] }
+  }
+}
