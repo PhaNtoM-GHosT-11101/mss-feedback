@@ -38,7 +38,8 @@ export default async function AdminComplaintsPage() {
   const upvotesBy = new Map<string, { user_id: string; full_name: string | null }[]>();
   for (const u of upvotes.data ?? []) {
     const list = upvotesBy.get(u.complaint_id) ?? [];
-    list.push({ user_id: u.user_id, full_name: (u.profiles as unknown as { full_name: string | null }[])?.at(0)?.full_name ?? null });
+    const p = u.profiles as unknown as { full_name: string | null } | { full_name: string | null }[] | null;
+    list.push({ user_id: u.user_id, full_name: (Array.isArray(p) ? p[0]?.full_name : p?.full_name) ?? null });
     upvotesBy.set(u.complaint_id, list);
   }
   const commentsBy = new Map<string, typeof comments.data>();
