@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # MSS Feedback App — Handoff Notes (Aug 11, 2026)
 
-Hostel mess feedback app. Next.js 16 (App Router, server-rendered), Supabase (project `gmkzcxvgbhhvznbkxlae`), deployed on Vercel: **https://mss-feedback.vercel.app**. All work is committed to `main` (latest `a13d5c8`).
+Hostel mess feedback app. Next.js 16 (App Router, server-rendered), Supabase (project `gmkzcxvgbhhvznbkxlae`), deployed on Vercel: **https://mss-feedback.vercel.app**. All work is committed to `main` (latest `e23b0d0`).
 
 ## Current state (all working, verified)
 
@@ -30,4 +30,7 @@ Hostel mess feedback app. Next.js 16 (App Router, server-rendered), Supabase (pr
 
 ## Deploy
 
-Push to `main` → Vercel auto-deploys. Always re-run QA after DB/app changes.
+- **No GitHub webhook** — pushing to `main` does NOT auto-deploy (repo has zero webhooks; only CLI deploys work).
+- Deploy with: `vercel deploy --prod --yes` (CLI is logged in as `adityaonwindows10-6386` via `vercel login`; token in `~/.vercel/auth.json`).
+- The Vercel MCP OAuth token expires every hour and mcp-remote can't refresh it (no refresh_token stored) — MCP calls fail with timeouts/"Not authorized" once expired. If that happens, ask the user to re-run `npx vercel login` in a terminal; CLI deploy works regardless.
+- Always re-run QA after DB/app changes.
