@@ -36,8 +36,7 @@ export function VoteBar({ complaintId, upvotes }: { complaintId: string; upvotes
       const { error } = await supabase
         .from("complaint_upvotes")
         .delete()
-        .eq("complaint_id", complaintId)
-        .eq("user_id", myId);
+        .eq("complaint_id", complaintId);
       if (!error) {
         setUpvoted(false);
         setCount((n) => Math.max(n - 1, 0));
