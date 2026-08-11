@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # MSS Feedback App — Handoff Notes (Aug 11, 2026)
 
-Hostel mess feedback app. Next.js 16 (App Router, server-rendered), Supabase (project `gmkzcxvgbhhvznbkxlae`), deployed on Vercel: **https://mss-feedback.vercel.app**. All work is committed to `main` (latest `12d3ba6`).
+Hostel mess feedback app. Next.js 16 (App Router, server-rendered), Supabase (project `gmkzcxvgbhhvznbkxlae`), deployed on Vercel: **https://mss-feedback.vercel.app**. All work is committed to `main` (latest `a13d5c8`).
 
 ## Current state (all working, verified)
 
@@ -19,7 +19,8 @@ Hostel mess feedback app. Next.js 16 (App Router, server-rendered), Supabase (pr
 - **Column privacy design** (migrations 009, 010): `user_id` columns hidden from `authenticated`; author names stored in `complaint_author`, `comment_author`, `praise_author` (filled by `fill_*` triggers). Admin/service_role see everything.
 - **Migration 011**: `grant all on all tables in schema public to service_role` applied live.
 - Admin: only Aditya Priyadarshi (`61aef4a7-a744-4e99-b6f4-284254cc457f`, role `admin`). Admin membership in `admin_members` (PK `user_id`, NO `id` column — delete by `user_id`). Manage at `/admin/users`.
-- All 13 migrations (`supabase/migrations/202608110001..013`) applied to production. Apply new SQL via Management API: `curl -H "Authorization: Bearer $SUPABASE_PAT" -H "Content-Type: application/json" -d @payload.json "https://api.supabase.com/v1/projects/gmkzcxvgbhhvznbkxlae/database/query"` (build JSON payload with `node -e "console.log(JSON.stringify({query: process.argv[1]}))"`). The PAT is a local env var only — never commit it. (Push protection blocked it once in `cb5edac`; history rewritten.)
+- **Privilege separation (audit fix, commit `a13d5c8`)**: user/role management server actions (`setUserBanned`, `deleteUser`, `updateUserProfile`, `addCommitteeMember`, `removeCommitteeMember`) require `isAdmin` — committee members are blocked. Complaint moderation stays committee-level. Profile reads restricted to own row (migration 014); daily complaint limit counts Asia/Kolkata day (migration 015).
+- All 15 migrations (`supabase/migrations/202608110001..015`) applied to production. Apply new SQL via Management API: `curl -H "Authorization: Bearer $SUPABASE_PAT" -H "Content-Type: application/json" -d @payload.json "https://api.supabase.com/v1/projects/gmkzcxvgbhhvznbkxlae/database/query"` (build JSON payload with `node -e "console.log(JSON.stringify({query: process.argv[1]}))"`). The PAT is a local env var only — never commit it. (Push protection blocked it once in `cb5edac`; history rewritten.)
 
 ## Environment
 
