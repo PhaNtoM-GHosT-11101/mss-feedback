@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # MSS Feedback App — Handoff Notes (Aug 11, 2026)
 
-Hostel mess feedback app. Next.js 16 (App Router, server-rendered), Supabase (project `gmkzcxvgbhhvznbkxlae`), deployed on Vercel: **https://mss-feedback.vercel.app**. All work is committed to `main` (latest `84e9234`).
+Hostel mess feedback app. Next.js 16 (App Router, server-rendered), Supabase (project `gmkzcxvgbhhvznbkxlae`), deployed on Vercel: **https://mss-feedback.vercel.app**. All work is committed to `main` (latest `cddf727`).
 
 ## Current state (all working, verified)
 
