@@ -263,28 +263,52 @@ export function GeneralEditor({ initial }: { initial: { daily_complaint_limit?: 
 export function MembersEditor({
   members,
   emailBy,
+  authEmails,
 }: {
   members: { user_id: string; role: string; created_at: string }[];
   emailBy: Map<string, string>;
+  authEmails: string[];
 }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"committee" | "admin">("committee");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState("");
 
   async function add() {
     if (!email.trim()) return;
-    await addCommitteeMember(email.trim().toLowerCase(), role);
-    setEmail("");
+    setBusy(true);
+    setError("");
+    setDone("");
+    try {
+      await addCommitteeMember(email.trim().toLowerCase(), role);
+      setEmail("");
+      setDone("Added.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not add member — try again.");
+    }
+    setBusy(false);
     router.refresh();
   }
 
   return (
     <div className="mt-3 space-y-3">
+      <p className="text-xs text-gray-400">
+        Only people who have already signed in to the app can be added.{" "}
+        <span className="text-gray-300 dark:text-gray-500">(pick from the suggestions)</span>
+      </p>
+      <datalist id="committee-emails">
+        {authEmails.map((em) => (
+          <option key={em} value={em} />
+        ))}
+      </datalist>
       <div className="flex gap-2 text-sm">
         <input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="member@nita.ac.in"
+          list="committee-emails"
+          placeholder="someone's signed-in email…"
           className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 outline-none focus:border-emerald-500 dark:border-gray-700 dark:bg-gray-800"
         />
         <select
@@ -297,11 +321,14 @@ export function MembersEditor({
         </select>
         <button
           onClick={add}
-          className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700 dark:bg-white dark:text-gray-900"
+          disabled={busy}
+          className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-40 dark:bg-white dark:text-gray-900"
         >
-          Add
+          {busy ? "Adding…" : "Add"}
         </button>
       </div>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      {done && <p className="text-xs text-emerald-500">{done} They now have {role === "admin" ? "super-admin" : "committee"} access.</p>}
       <div className="space-y-2">
         {members.map((m) => (
           <div key={m.user_id} className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 p-2 text-sm dark:bg-gray-800">

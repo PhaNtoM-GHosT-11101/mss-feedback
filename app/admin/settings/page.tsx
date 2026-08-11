@@ -1,17 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCommittee } from "@/lib/admin-guard";
-import { timeAgo } from "@/lib/format";
-import {
-  saveCategories,
-  deleteCategory,
-  saveMeals,
-  deleteMeal,
-  saveMesses,
-  deleteMess,
-  saveGeneralSettings,
-  addCommitteeMember,
-  removeCommitteeMember,
-} from "../actions";
 import { CategoriesEditor, MealsEditor, MessesEditor, GeneralEditor, MembersEditor } from "./editors";
 
 export const dynamic = "force-dynamic";
@@ -72,7 +60,7 @@ export default async function AdminSettingsPage() {
             <p className="text-xs text-gray-400">
               Committee: reply to complaints + view reports. Super-admin: everything.
             </p>
-            <MembersEditor members={members.data ?? []} emailBy={emailBy} />
+            <MembersEditor members={members.data ?? []} emailBy={emailBy} authEmails={[...emailBy.values()]} />
           </section>
         </>
       )}
