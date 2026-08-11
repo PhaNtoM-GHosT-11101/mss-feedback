@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # MSS Feedback App — Handoff Notes (Aug 11, 2026)
 
-Hostel mess feedback app. Next.js 16 (App Router, server-rendered), Supabase (project `gmkzcxvgbhhvznbkxlae`), deployed on Vercel: **https://mss-feedback.vercel.app**. All work is committed to `main` (latest `e23b0d0`).
+Hostel mess feedback app. Next.js 16 (App Router, server-rendered), Supabase (project `gmkzcxvgbhhvznbkxlae`), deployed on Vercel: **https://mss-feedback.vercel.app**. All work is committed to `main` (latest `84e9234`).
 
 ## Current state (all working, verified)
 
@@ -27,6 +27,14 @@ Hostel mess feedback app. Next.js 16 (App Router, server-rendered), Supabase (pr
 - `.env.local` has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - Vercel MCP is now OAuth-authorized (token at `~/.mcp-auth/mcp-remote-0.1.37/`) — `vercel_*` tools work in sessions started after 21:17 Aug 11
 - Lint: `npx eslint` (0 errors). QA: `node scripts/qa.mjs`
+
+## Chat backups / fresh-session handoff
+
+If the user opens a **new chat window** (context reset) and wants continuity instead of the agent guessing from memory:
+
+- **Full history**: `bash ~/bin/opencode-chat-backup.sh` — dumps every opencode session to `~/chat-backups/<timestamp>/` (markdown transcripts in `sessions/`, lossless JSONL in `raw/`, `index.md` lists all sessions newest-first). Point the new session at the latest folder.
+- **Most relevant project session**: `ses_00e78ff9affeNbZeBX6B3pm45i` (this project, through the latest fixes) and `ses_012c037ebffe6cENP2H8zXGSBO` (earlier mss-feedback work). If uncertain, grep `index.md`.
+- **Anti-hallucination rule for a fresh session**: read THIS file first; verify any fact it can't confirm (DB via `scripts/check-*.mjs` or service-role curl, schema via Supabase tooling, deploy state via `vercel ls`), don't invent. Re-run `node scripts/qa.mjs` after changes.
 
 ## Deploy
 
