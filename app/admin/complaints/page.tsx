@@ -23,11 +23,9 @@ export default async function AdminComplaintsPage({
   const sp = await searchParams;
   const sort = sp.sort === "latest" ? "latest" : "upvotes";
 
-  const complaintsQuery = db
-    .from("complaints")
-    .select("*, profiles!complaints_user_id_fkey(full_name, roll_no)")
-    .order("created_at", { ascending: false });
+  const complaintsQuery = db.from("complaints").select("*, profiles!complaints_user_id_fkey(full_name, roll_no)");
   if (sort === "upvotes") complaintsQuery.order("upvote_count", { ascending: false });
+  complaintsQuery.order("created_at", { ascending: false });
 
   const [complaints, upvotes, comments, flags] = await Promise.all([
     complaintsQuery.limit(200),
