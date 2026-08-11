@@ -66,6 +66,21 @@ export default async function HomePage() {
   ]);
 
   const messId = profile?.mess_id ?? null;
+
+  if (profile?.is_banned) {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-8 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-2xl font-bold text-red-500 dark:bg-red-950/50">
+          !
+        </div>
+        <h1 className="mt-4 text-lg font-semibold tracking-tight">Account suspended</h1>
+        <p className="mt-2 text-sm text-zinc-400">
+          Your account has been suspended by the mess committee for violating the code of
+          conduct. If you believe this is a mistake, contact the committee.
+        </p>
+      </div>
+    );
+  }
   if (messId === null) redirect("/onboard");
   const myRatings = (myRatingsRaw ?? []).filter(
     (r: { rating_date: string }) => r.rating_date === todayISO(),
