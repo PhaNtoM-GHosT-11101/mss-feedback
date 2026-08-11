@@ -20,6 +20,7 @@ export default async function AdminComplaintsPage() {
     db
       .from("complaints")
       .select("*, profiles!complaints_user_id_fkey(full_name, roll_no)")
+      .order("upvote_count", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(200),
     db
