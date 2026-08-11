@@ -55,9 +55,6 @@ body {
     border-color 150ms ease,
     box-shadow 150ms ease;
 }
-.dark .card {
-  border-color: rgb(39 39 42);
-}
 .card-hover:hover {
   border-color: rgb(16 185 129 / 0.5);
   box-shadow: 0 4px 24px -12px rgb(0 0 0 / 0.12);
@@ -79,10 +76,6 @@ body {
 }
 .btn-primary:active {
   transform: scale(0.98);
-}
-.dark .btn-primary {
-  background: #fafafa;
-  color: #0a0a0a;
 }
 
 .btn-accent {
@@ -116,13 +109,6 @@ body {
 .btn-ghost:hover {
   background: rgb(249 250 251);
 }
-.dark .btn-ghost {
-  border-color: rgb(63 63 70);
-  color: rgb(212 212 216);
-}
-.dark .btn-ghost:hover {
-  background: rgb(24 24 27);
-}
 
 .section-label {
   font-size: 0.6875rem;
@@ -137,6 +123,7 @@ body {
   border-radius: 0.75rem;
   border: 1px solid rgb(229 231 235);
   background: rgb(250 250 250);
+  color: var(--foreground);
   padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
   outline: none;
@@ -145,10 +132,37 @@ body {
 .input:focus {
   border-color: rgb(16 185 129);
 }
-.dark .input {
-  border-color: rgb(63 63 70);
-  background: rgb(24 24 27);
+.input::placeholder {
+  color: rgb(161 161 170);
 }
-.dark .input:focus {
-  border-color: rgb(16 185 129);
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    border-color: rgb(39 39 42);
+  }
+  .btn-primary {
+    background: #fafafa;
+    color: #0a0a0a;
+  }
+  .btn-primary:hover {
+    opacity: 0.9;
+  }
+  .btn-ghost {
+    border-color: rgb(63 63 70);
+    color: rgb(212 212 216);
+  }
+  .btn-ghost:hover {
+    background: rgb(24 24 27);
+  }
+  .input {
+    border-color: rgb(63 63 70);
+    background: rgb(24 24 27);
+    color: #fafafa;
+  }
+  .input:focus {
+    border-color: rgb(16 185 129);
+  }
+  .section-label {
+    color: rgb(113 113 122);
+  }
 }
