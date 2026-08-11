@@ -45,6 +45,35 @@ export default function NewComplaintPage() {
     supabase.rpc("complaints_left_today").then(({ data }) => setLeftToday(data));
   }, []);
 
+  async function compressImage(file: File): Promise<Blob> {
+    try {
+      const bmp = await createImageBitmap(file);
+      const max = 1600;
+      const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+      if (scale >= 1 && file.size <= 4 * 1024 * 1024) {
+        bmp.close();
+        return file;
+      }
+      const w = Math.max(1, Math.round(bmp.width * scale));
+      const h = Math.max(1, Math.round(bmp.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        bmp.close();
+        return file;
+      }
+      ctx.drawImage(bmp, 0, 0, w, h);
+      bmp.close();
+      return await new Promise<Blob>((resolve) =>
+        canvas.toBlob((b) => resolve(b ?? file), "image/jpeg", 0.72),
+      );
+    } catch {
+      return file;
+    }
+  }
+
   async function submit() {
     if (!categoryId || title.trim().length < 3 || description.trim().length < 10) {
       setError("Title (3+ chars) and description (10+ chars) required.");
@@ -56,16 +85,18 @@ export default function NewComplaintPage() {
 
     const urls: string[] = [];
     for (const file of photos.slice(0, 2)) {
-      if (file.size > 4 * 1024 * 1024) {
-        setError("Photos must be under 4MB each.");
+      if (file.size > 10 * 1024 * 1024) {
+        setError("Photos must be under 10MB each.");
         setSaving(false);
         return;
       }
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `${crypto.randomUUID()}.${ext}`;
+      const blob = await compressImage(file);
+      const uploadFile = blob === file ? file : new File([blob], path, { type: "image/jpeg" });
       const { error: upErr } = await supabase.storage
         .from("complaint-photos")
-        .upload(path, file);
+        .upload(path, uploadFile);
       if (upErr) {
         setError(`Photo upload failed: ${upErr.message}`);
         setSaving(false);
@@ -162,7 +193,7 @@ export default function NewComplaintPage() {
         </div>
 
         <div>
-          <label className="section-label">Photos (optional, max 2)</label>
+          <label className="section-label">Photos (optional, max 2 · ≤10 MB each)</label>
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
