@@ -35,16 +35,22 @@ export default async function ProfilePage() {
       .select("*")
       .eq("is_active", true)
       .order("name"),
-    supabase.rpc("my_complaints").then((x) => x as unknown as MyComplaint[]),
-    supabase.rpc("my_ratings").then((x) => x as unknown as MyRating[]),
-    supabase.rpc("my_praises").then((x) => x as unknown as { id: string }[]),
+    supabase
+      .rpc("my_complaints")
+      .then((x) => ((x as unknown as { data: MyComplaint[] | null }).data ?? []) as MyComplaint[]),
+    supabase
+      .rpc("my_ratings")
+      .then((x) => ((x as unknown as { data: MyRating[] | null }).data ?? []) as MyRating[]),
+    supabase
+      .rpc("my_praises")
+      .then((x) => ((x as unknown as { data: { id: string }[] | null }).data ?? []) as { id: string }[]),
   ]);
 
   const profile = (prof.data ?? null) as unknown as Profile | null;
   const messes = (ms.data ?? []) as Mess[];
-  const myComplaints = c ?? [];
-  const myRatings = [...(r ?? [])].reverse();
-  const myPraisesCount = (p ?? []).length;
+  const myComplaints = c;
+  const myRatings = [...r].reverse();
+  const myPraisesCount = p.length;
 
   return (
     <div className="mx-auto max-w-lg px-4">
