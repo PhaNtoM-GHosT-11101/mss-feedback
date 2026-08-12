@@ -70,7 +70,7 @@ export default async function ComplaintsPage({
   });
 
   return (
-    <div className="mx-auto max-w-lg px-4">
+    <div className="mx-auto max-w-2xl px-4">
       <NavBar />
 
       <div className="flex items-center justify-between">
@@ -82,9 +82,9 @@ export default async function ComplaintsPage({
 
       <FilterBar categories={cats} initial={{ status, category, q, sort }} />
 
-      <div className="mt-3 space-y-2">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {list.length === 0 && (
-          <p className="card border-dashed p-8 text-center text-sm text-zinc-400">
+          <p className="card border-dashed p-8 text-center text-sm text-zinc-400 sm:col-span-2">
             No complaints match.
           </p>
         )}

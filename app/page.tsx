@@ -113,7 +113,7 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4">
+    <div className="mx-auto max-w-2xl px-4">
       <NavBar userName={profile?.full_name} />
 
       {announcements.data && announcements.data.length > 0 && (
@@ -141,7 +141,7 @@ export default async function HomePage() {
         <h2 className="section-label">Today&apos;s ratings</h2>
         <span className="text-[11px] text-zinc-400">{today}</span>
       </div>
-      <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         {(meals.data ?? []).map((meal: Meal) => {
           const my = myRatings.find(
             (r: { meal_id: string }) => r.meal_id === meal.id,
@@ -213,9 +213,9 @@ export default async function HomePage() {
           View all
         </Link>
       </div>
-      <div className="mt-3 space-y-2">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {(top.data ?? []).length === 0 && (
-          <p className="card border-dashed p-5 text-center text-sm text-zinc-400">
+          <p className="card border-dashed p-5 text-center text-sm text-zinc-400 sm:col-span-2">
             No complaints yet — be the first voice.
           </p>
         )}
@@ -257,9 +257,9 @@ export default async function HomePage() {
           View all
         </Link>
       </div>
-      <div className="mt-3 space-y-2">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {(praises.data ?? []).length === 0 && (
-          <p className="card border-dashed p-5 text-center text-sm text-zinc-400">
+          <p className="card border-dashed p-5 text-center text-sm text-zinc-400 sm:col-span-2">
             No praise yet — your mess staff would love one.
           </p>
         )}

@@ -26,7 +26,7 @@ export default async function PraisePage() {
   const praises = await getPraises();
 
   return (
-    <div className="mx-auto max-w-lg px-4">
+    <div className="mx-auto max-w-2xl px-4">
       <NavBar />
 
       <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">

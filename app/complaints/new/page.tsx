@@ -136,7 +136,7 @@ export default function NewComplaintPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4">
+    <div className="mx-auto max-w-2xl px-4">
       <NavBar />
       <button
         onClick={() => router.back()}

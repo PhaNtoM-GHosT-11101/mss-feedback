@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
   title: "MSS Feedback — NIT Agartala",
@@ -7,19 +8,39 @@ export const metadata: Metadata = {
     "Complaints, daily food ratings and praise for the NIT Agartala Mess & Service Society.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
+const themeScript = `
+(function () {
+  try {
+    var t = localStorage.getItem("mss-theme");
+    if (t !== "light" && t !== "dark") {
+      t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    document.documentElement.setAttribute("data-theme", t);
+    document.documentElement.style.colorScheme = t;
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="preconnect" href="https://gmkzcxvgbhhvznbkxlae.supabase.co" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://gmkzcxvgbhhvznbkxlae.supabase.co" />
       </head>
-      <body className="min-h-screen bg-background text-foreground antialiased">
-        {children}
+      <body className="min-h-svh bg-background text-foreground antialiased">
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

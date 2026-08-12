@@ -1,19 +1,21 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const err = searchParams.get("error");
-    if (err === "auth") setError("Sign-in failed. Please try again.");
-  }, [searchParams]);
+  const [error, setError] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const err = new URLSearchParams(window.location.search).get("error");
+      return err === "auth" ? "Sign-in failed. Please try again." : null;
+    } catch {
+      return null;
+    }
+  });
 
   async function signInWithGoogle() {
     setLoading(true);
@@ -33,7 +35,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+    <div className="flex min-h-svh flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 text-sm font-bold tracking-wide text-white shadow-lg shadow-zinc-900/10 dark:bg-white dark:text-zinc-900">

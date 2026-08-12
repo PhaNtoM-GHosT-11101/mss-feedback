@@ -53,7 +53,7 @@ export default async function ProfilePage() {
   const myPraisesCount = p.length;
 
   return (
-    <div className="mx-auto max-w-lg px-4">
+    <div className="mx-auto max-w-2xl px-4">
       <NavBar userName={profile?.full_name} />
 
       <div className="card p-4">

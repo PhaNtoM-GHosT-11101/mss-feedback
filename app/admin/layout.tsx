@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCommittee } from "@/lib/admin-guard";
+import { ThemeToggle } from "@/components/theme-provider";
 
 export const dynamic = "force-dynamic";
 
@@ -29,14 +30,17 @@ export default async function AdminLayout({
             </Link>
             <p className="text-[11px] text-gray-400">{profile?.full_name}</p>
           </div>
-          <Link href="/" className="text-xs text-gray-500 hover:text-gray-700">
-            ← Back to app
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="text-xs text-gray-500 hover:text-gray-700">
+              ← Back to app
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
       <nav className="sticky top-[57px] z-30 border-b border-gray-200 bg-white/95 backdrop-blur dark:border-gray-800 dark:bg-gray-900/95">
-        <div className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 py-2">
+        <div className="mx-auto flex max-w-5xl gap-1 overflow-x-auto no-scrollbar px-4 py-2">
           {links.map((l) => (
             <Link
               key={l.href}

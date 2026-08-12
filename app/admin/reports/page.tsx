@@ -1,7 +1,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCommittee } from "@/lib/admin-guard";
 import { formatDate } from "@/lib/format";
-import { TrendChart, ExportButtons } from "./reports-ui";
+import { ExportButtons } from "./reports-ui";
+import { AreaTrend } from "@/components/charts/AreaTrend";
+import { Donut } from "@/components/charts/Donut";
+import { HBars } from "@/components/charts/HBars";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +66,23 @@ export default async function AdminReportsPage() {
     categoryCounts[name] = (categoryCounts[name] ?? 0) + 1;
   }
 
+  const statusColor: Record<string, string> = {
+    new: "var(--chart-3)",
+    in_progress: "var(--chart-2)",
+    resolved: "var(--chart-1)",
+  };
+  const statusSegments = Object.entries(statusCounts).map(([s, n]) => ({
+    label: s === "in_progress" ? "in progress" : s,
+    value: n,
+    color: statusColor[s] ?? "var(--chart-5)",
+  }));
+  const palette = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
+  const categoryBars = Object.entries(categoryCounts).map(([name, n], i) => ({
+    label: name,
+    value: n,
+    color: palette[i % palette.length],
+  }));
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -78,7 +98,7 @@ export default async function AdminReportsPage() {
         <p className="text-xs text-gray-400">
           {[...mealIdName.values()].join(" · ")}
         </p>
-        <TrendChart
+        <AreaTrend
           data={trend.map((t) => ({ label: t.label, overall: t.overall, meals: t.meals }))}
           mealNames={[...mealIdName.values()]}
         />
@@ -87,27 +107,19 @@ export default async function AdminReportsPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <section className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="text-sm font-semibold">Complaints by status</h2>
-          <div className="mt-3 space-y-2">
-            {Object.entries(statusCounts).map(([status, n]) => (
-              <div key={status} className="flex items-center justify-between text-sm">
-                <span className="capitalize text-gray-600 dark:text-gray-300">{status}</span>
-                <span className="font-medium">{n}</span>
-              </div>
-            ))}
-            {Object.keys(statusCounts).length === 0 && <p className="text-xs text-gray-400">No complaints.</p>}
+          <div className="mt-3">
+            <Donut
+              segments={statusSegments}
+              centerValue={statusSegments.reduce((s, x) => s + x.value, 0).toString()}
+              centerLabel="total"
+            />
           </div>
         </section>
 
         <section className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="text-sm font-semibold">Complaints by category</h2>
-          <div className="mt-3 space-y-2">
-            {Object.entries(categoryCounts).map(([name, n]) => (
-              <div key={name} className="flex items-center justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-300">{name}</span>
-                <span className="font-medium">{n}</span>
-              </div>
-            ))}
-            {Object.keys(categoryCounts).length === 0 && <p className="text-xs text-gray-400">No complaints.</p>}
+          <div className="mt-3">
+            <HBars items={categoryBars} />
           </div>
         </section>
       </div>

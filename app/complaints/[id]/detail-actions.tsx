@@ -84,7 +84,7 @@ export function VoteBar({ complaintId, upvotes }: { complaintId: string; upvotes
       <div className="flex items-center gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
         <button
           onClick={toggleUpvote}
-          className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+          className={`tap flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
             upvoted
               ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
               : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200"
@@ -95,14 +95,14 @@ export function VoteBar({ complaintId, upvotes }: { complaintId: string; upvotes
         </button>
         <button
           onClick={flagComplaint}
-          className="ml-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:text-red-500"
+          className="tap ml-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:text-red-500"
         >
           <Flag className="h-3.5 w-3.5" /> Report
         </button>
         {canDelete && (
           <button
             onClick={deleteComplaint}
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-400 transition hover:text-red-600"
+            className="tap flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-400 transition hover:text-red-600"
           >
             <Trash2 className="h-3.5 w-3.5" /> Delete
           </button>
@@ -119,6 +119,8 @@ export function CommentForm({ complaintId }: { complaintId: string }) {
   const [text, setText] = useState("");
   const [myId, setMyId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [posted, setPosted] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     createClient()
@@ -128,30 +130,48 @@ export function CommentForm({ complaintId }: { complaintId: string }) {
 
   async function post() {
     if (!text.trim() || !myId || busy) return;
+    const optimistic = text.trim();
     setBusy(true);
+    setFailed(false);
+    setPosted(optimistic);
+    setText("");
     const supabase = createClient();
     const { error } = await supabase
       .from("complaint_comments")
-      .insert({ complaint_id: complaintId, user_id: myId, body: text.trim() });
+      .insert({ complaint_id: complaintId, user_id: myId, body: optimistic });
     setBusy(false);
-    if (error) return;
-    setText("");
+    if (error) {
+      setFailed(true);
+      setText(optimistic);
+      setTimeout(() => setPosted(null), 60);
+      return;
+    }
+    setPosted(null);
     await revalidateComplaint();
     router.refresh();
   }
 
   return (
-    <div className="flex gap-2">
-      <input
-        value={text}
-        onChange={(e) => setText(e.target.value.slice(0, 500))}
-        onKeyDown={(e) => e.key === "Enter" && post()}
-        placeholder="Add a comment…"
-        className="input flex-1"
-      />
-      <button onClick={post} disabled={!text.trim() || busy} className="btn-primary px-4 text-xs disabled:opacity-40">
-        {busy ? "Posting…" : "Post"}
-      </button>
+    <div>
+      <div className="flex gap-2">
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value.slice(0, 500))}
+          onKeyDown={(e) => e.key === "Enter" && post()}
+          placeholder="Add a comment…"
+          className="input flex-1"
+        />
+        <button onClick={post} disabled={!text.trim() || busy} className="btn-primary tap px-4 text-xs disabled:opacity-40">
+          {busy ? "Posting…" : "Post"}
+        </button>
+      </div>
+      {posted && !failed && (
+        <div className="card mt-2 p-3 text-sm opacity-90">
+          <p>{posted}</p>
+          <p className="mt-1 text-xs text-zinc-400">You · just now</p>
+        </div>
+      )}
+      {failed && <p className="mt-2 text-xs text-red-500">Comment not posted. Please try again.</p>}
     </div>
   );
 }

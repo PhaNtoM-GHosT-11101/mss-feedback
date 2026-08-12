@@ -28,18 +28,24 @@ export default function RateMeal({
   const [comment, setComment] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [optimistic, setOptimistic] = useState<number | null>(null);
   const open = isMealOpen(meal);
-  const canRate = open && !saving && messId !== null;
+  const effectiveRated = optimistic ?? ratedToday;
 
   async function submit() {
     if (!rating || !messId) return;
     setSaving(true);
     setError(null);
+    setOptimistic(rating);
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      setOptimistic(null);
+      setSaving(false);
+      return;
+    }
     const { error } = await supabase.from("ratings").insert({
       meal_id: meal.id,
       mess_id: messId,
@@ -49,6 +55,7 @@ export default function RateMeal({
     });
     setSaving(false);
     if (error) {
+      setOptimistic(null);
       setError(
         error.message.includes("duplicate")
           ? "You already rated this meal today."
@@ -56,6 +63,8 @@ export default function RateMeal({
       );
       return;
     }
+    setRating(null);
+    setComment("");
     router.refresh();
   }
 
@@ -91,9 +100,9 @@ export default function RateMeal({
           </div>
         </div>
 
-        {ratedToday !== null ? (
+        {effectiveRated !== null ? (
           <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-400 dark:ring-emerald-900">
-            <Check className="h-3 w-3" /> Rated {ratedToday}★
+            <Check className="h-3 w-3" /> Rated {effectiveRated}★
           </span>
         ) : !open ? (
           <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-medium text-zinc-400 dark:bg-zinc-800">
@@ -102,20 +111,20 @@ export default function RateMeal({
         ) : null}
       </div>
 
-      {open && ratedToday === null && messId === null && (
+      {open && effectiveRated === null && messId === null && (
         <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900">
           Pick your mess in Profile to rate meals.
         </p>
       )}
 
-      {open && ratedToday === null && messId !== null && (
+      {open && effectiveRated === null && messId !== null && (
         <div className="mt-4 border-t border-zinc-100 pt-3 dark:border-zinc-800">
           <div className="flex items-center justify-between gap-3">
             <Stars value={rating ?? 0} onChange={setRating} />
             <button
               onClick={submit}
               disabled={!rating || saving}
-              className="btn-accent px-4 py-1.5 text-xs disabled:opacity-40"
+              className="btn-accent tap px-4 py-1.5 text-xs disabled:opacity-40"
             >
               {saving ? "Saving…" : "Submit"}
             </button>

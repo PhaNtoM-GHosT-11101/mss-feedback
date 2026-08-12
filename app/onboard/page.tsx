@@ -57,7 +57,7 @@ export default function OnboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+    <div className="flex min-h-svh flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 text-xs font-bold tracking-wide text-white dark:bg-white dark:text-zinc-900">

@@ -57,7 +57,7 @@ export default async function ComplaintDetailPage({
   const { complaint, comments, category, mess } = data;
 
   return (
-    <div className="mx-auto max-w-lg px-4">
+    <div className="mx-auto max-w-2xl px-4">
       <NavBar />
       <Link
         href="/complaints"
@@ -90,13 +90,14 @@ export default async function ComplaintDetailPage({
         </p>
 
         {complaint.photo_urls.length > 0 && (
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-0.5">
+          <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
             {complaint.photo_urls.map((u) => (
               <img
                 key={u}
                 src={u}
                 alt="complaint evidence"
-                className="h-28 w-28 shrink-0 rounded-lg object-cover ring-1 ring-zinc-100 dark:ring-zinc-800"
+                loading="lazy"
+                className="aspect-square h-28 w-28 shrink-0 rounded-lg object-cover ring-1 ring-zinc-100 dark:ring-zinc-800"
               />
             ))}
           </div>

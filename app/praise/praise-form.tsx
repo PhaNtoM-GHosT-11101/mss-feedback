@@ -11,39 +11,57 @@ export default function PraiseForm() {
   const [anon, setAnon] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [posted, setPosted] = useState<string | null>(null);
+  const [postedAnon, setPostedAnon] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!text.trim() || busy) return;
+    const optimistic = text.trim().slice(0, 280);
+    const optimisticAnon = anon;
     setBusy(true);
     setError("");
+    setFailed(false);
+    setPosted(optimistic);
+    setPostedAnon(optimisticAnon);
+    setText("");
+    setAnon(false);
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
+      setFailed(true);
       setError("Sign in first.");
+      setText(optimistic);
+      setAnon(optimisticAnon);
+      setPosted(null);
       setBusy(false);
       return;
     }
     const { error: err } = await supabase.from("praises").insert({
       user_id: user.id,
-      text: text.trim().slice(0, 280),
-      is_anonymous: anon,
+      text: optimistic,
+      is_anonymous: optimisticAnon,
       created_at: new Date().toISOString(),
     });
     setBusy(false);
     if (err) {
+      setFailed(true);
       setError(err.message);
+      setText(optimistic);
+      setAnon(optimisticAnon);
+      setPosted(null);
       return;
     }
-    setText("");
-    setAnon(false);
+    setPosted(null);
     router.refresh();
   }
 
   return (
-    <form onSubmit={submit} className="card mt-4 p-4">
+    <div>
+      <form onSubmit={submit} className="card mt-4 p-4">
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value.slice(0, 280))}
@@ -66,6 +84,13 @@ export default function PraiseForm() {
         </button>
       </div>
       {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
-    </form>
+      </form>
+      {posted && !failed && (
+        <div className="card mt-2 p-4 opacity-90">
+          <p className="text-sm leading-relaxed">{posted}</p>
+          <p className="mt-2 text-xs text-zinc-400">{postedAnon ? "Anonymous" : "You"} · just now</p>
+        </div>
+      )}
+    </div>
   );
 }
