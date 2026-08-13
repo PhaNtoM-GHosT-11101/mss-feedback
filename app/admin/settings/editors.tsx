@@ -171,6 +171,16 @@ export function MessesEditor({ initial }: { initial: Mess[] }) {
             onChange={(e) => set(m.id, { name: e.target.value })}
             className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 outline-none focus:border-emerald-500 dark:border-gray-700 dark:bg-gray-800"
           />
+          <select
+            value={m.mess_type ?? "none"}
+            onChange={(e) => set(m.id, { mess_type: e.target.value as Mess["mess_type"] })}
+            className="rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs outline-none dark:border-gray-700 dark:bg-gray-800"
+            title="Mess type (veg / non-veg identity)"
+          >
+            <option value="none">General</option>
+            <option value="veg">Veg mess</option>
+            <option value="non_veg">Non-veg mess</option>
+          </select>
           <label className="flex items-center gap-1 text-xs text-gray-500">
             <input
               type="checkbox"
@@ -188,7 +198,7 @@ export function MessesEditor({ initial }: { initial: Mess[] }) {
         </div>
       ))}
       <button
-        onClick={() => setList([...list, { id: crypto.randomUUID(), name: "", is_active: true }])}
+        onClick={() => setList([...list, { id: crypto.randomUUID(), name: "", is_active: true, mess_type: "none" }])}
         className="text-xs font-medium text-emerald-600 hover:underline"
       >
         + add mess
@@ -264,17 +274,22 @@ export function MembersEditor({
   members,
   emailBy,
   authEmails,
+  messes,
 }: {
-  members: { user_id: string; role: string; created_at: string }[];
+  members: { user_id: string; role: string; mess_id: string | null; created_at: string }[];
   emailBy: Map<string, string>;
   authEmails: string[];
+  messes: Mess[];
 }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"committee" | "admin">("committee");
+  const [messId, setMessId] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState("");
+
+  const messName = (id: string | null) => (id ? messes.find((m) => m.id === id)?.name ?? "?" : null);
 
   async function add() {
     if (!email.trim()) return;
@@ -282,10 +297,15 @@ export function MembersEditor({
     setError("");
     setDone("");
     try {
-      const res = await addCommitteeMember(email.trim().toLowerCase(), role);
+      const res = await addCommitteeMember(email.trim().toLowerCase(), role, messId || null);
       if (res.ok) {
         setEmail("");
-        setDone("Added. They now have " + (role === "admin" ? "super-admin" : "committee") + " access.");
+        setDone(
+          "Added. They now have " +
+            (role === "admin" ? "super-admin" : "committee") +
+            (role === "committee" && messId ? ` access for ${messName(messId)}` : " access for all messes") +
+            ".",
+        );
       } else {
         setError(res.error);
       }
@@ -317,12 +337,31 @@ export function MembersEditor({
         />
         <select
           value={role}
-          onChange={(e) => setRole(e.target.value as "committee" | "admin")}
+          onChange={(e) => {
+            const next = e.target.value as "committee" | "admin";
+            setRole(next);
+            if (next === "admin") setMessId("");
+          }}
           className="rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs outline-none dark:border-gray-700 dark:bg-gray-800"
         >
           <option value="committee">Committee</option>
           <option value="admin">Super-admin</option>
         </select>
+        {role === "committee" && (
+          <select
+            value={messId}
+            onChange={(e) => setMessId(e.target.value)}
+            className="max-w-[140px] rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs outline-none dark:border-gray-700 dark:bg-gray-800"
+            title="Mess scope"
+          >
+            <option value="">All messes</option>
+            {messes.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        )}
         <button
           onClick={add}
           disabled={busy}
@@ -339,7 +378,7 @@ export function MembersEditor({
             <div className="min-w-0">
               <p className="truncate font-medium">{emailBy.get(m.user_id) ?? m.user_id}</p>
               <p className="text-[11px] text-gray-400">
-                {m.role === "admin" ? "Super-admin" : "Committee"} · joined {timeAgo(m.created_at)}
+                {m.role === "admin" ? "Super-admin · all messes" : `Committee${messName(m.mess_id) ? ` · ${messName(m.mess_id)}` : " · all messes"}`} · joined {timeAgo(m.created_at)}
               </p>
             </div>
             <button

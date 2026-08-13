@@ -60,7 +60,12 @@ export default async function AdminSettingsPage() {
             <p className="text-xs text-gray-400">
               Committee: reply to complaints + view reports. Super-admin: everything.
             </p>
-            <MembersEditor members={members.data ?? []} emailBy={emailBy} authEmails={[...emailBy.values()]} />
+            <MembersEditor
+              members={(members.data ?? []) as { user_id: string; role: string; mess_id: string | null; created_at: string }[]}
+              emailBy={emailBy}
+              authEmails={[...emailBy.values()]}
+              messes={messes.data ?? []}
+            />
           </section>
         </>
       )}

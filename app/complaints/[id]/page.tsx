@@ -3,8 +3,9 @@ import { unstable_cache } from "next/cache";
 import { ChevronLeft, Pin } from "lucide-react";
 import Link from "next/link";
 import NavBar from "@/components/NavBar";
-import { VoteBar, CommentForm } from "./detail-actions";
+import { VoteBar, CommentForm, CloseComplaint, WhatsAppShare } from "./detail-actions";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient as createSessionClient } from "@/lib/supabase/server";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
 import type { Category, Comment, Complaint, Mess } from "@/lib/types";
 
@@ -55,6 +56,12 @@ export default async function ComplaintDetailPage({
   const data = await getData(id);
   if (!data) notFound();
   const { complaint, comments, category, mess } = data;
+  const session = await createSessionClient();
+  const {
+    data: { user },
+  } = await session.auth.getUser();
+  const isOwner = !!user && complaint.user_id === user.id;
+  const isResolved = complaint.status === "resolved";
 
   return (
     <div className="mx-auto max-w-2xl px-4">
@@ -120,6 +127,11 @@ export default async function ComplaintDetailPage({
         )}
 
         <VoteBar complaintId={id} upvotes={complaint.upvote_count} />
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {isOwner && !isResolved && <CloseComplaint complaintId={id} title={complaint.title} />}
+          <WhatsAppShare title={complaint.title} />
+        </div>
 
         <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
           <CommentForm complaintId={id} />

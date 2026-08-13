@@ -2,6 +2,7 @@ export type Mess = {
   id: string;
   name: string;
   is_active: boolean;
+  mess_type?: "none" | "veg" | "non_veg";
 };
 
 export type Category = {
@@ -45,6 +46,9 @@ export type Complaint = {
   // via security-definer functions (not the user_id column)
   complaint_author?: string | null;
   complaint_author_roll?: string | null;
+  // server-side only (service role); column hidden from authenticated
+  user_id?: string | null;
+  closed_by?: "student" | "committee" | null;
   // extra from joins on the server
   category?: { name: string } | null;
   mess?: { name: string } | null;

@@ -27,6 +27,7 @@ export async function setComplaintStatus(
     .from("complaints")
     .update({
       status,
+      closed_by: status === "resolved" ? "committee" : undefined,
       resolution_note: status === "resolved" ? (note?.trim() || null) : undefined,
       updated_at: new Date().toISOString(),
     })
@@ -115,13 +116,17 @@ export async function updateUserProfile(
 export async function addCommitteeMember(
   email: string,
   role: "committee" | "admin",
+  messId: string | null = null,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const db = await adminDbAsAdmin();
   const { data: userList, error } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
   if (error) return { ok: false, error: "Could not load users. Try again." };
   const match = userList?.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
   if (!match) return { ok: false, error: "No user with that email — they must sign in to the app once first." };
-  await db.from("admin_members").upsert({ user_id: match.id, role });
+  if (role === "admin" && messId) {
+    return { ok: false, error: "Super admins manage all messes — no mess scope." };
+  }
+  await db.from("admin_members").upsert({ user_id: match.id, role, mess_id: messId || null });
   revalidatePath("/admin/settings");
   return { ok: true };
 }
@@ -170,7 +175,7 @@ export async function deleteMeal(id: string) {
   revalidatePath("/admin/settings");
 }
 
-export async function saveMesses(messes: { id?: string; name: string; is_active: boolean }[]) {
+export async function saveMesses(messes: { id?: string; name: string; is_active: boolean; mess_type?: string }[]) {
   const db = await adminDb();
   for (const m of messes) {
     if (m.id) {

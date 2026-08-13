@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function getCommittee() {
   const supabase = await createClient();
@@ -21,10 +22,22 @@ export async function getCommittee() {
 
   if (!isCommittee) redirect("/");
 
+  // mess-scoped committee: which mess(es) they manage (null mess_id = all)
+  let messIds: string[] | null = null;
+  if (!isAdmin) {
+    const { data: rows } = await createAdminClient()
+      .from("admin_members")
+      .select("mess_id")
+      .eq("user_id", user.id)
+      .not("mess_id", "is", null);
+    messIds = (rows ?? []).map((r) => r.mess_id as string);
+  }
+
   return {
     user,
     profile,
     isAdmin: !!isAdmin,
     isCommittee: !!isCommittee,
+    messIds,
   };
 }

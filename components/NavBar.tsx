@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "./theme-provider";
+import NotificationBell from "./NotificationBell";
 import { IconHome, IconStats, IconComplaint, IconPraise, IconProfile, IconPlate } from "./icons";
 
 const tabs = [
@@ -87,6 +88,7 @@ export default function NavBar({ userName }: { userName?: string }) {
         <div className="border-t border-border px-3 py-4">
           <div className="flex items-center justify-between px-2 pb-2">
             <ThemeToggle />
+            <NotificationBell />
             <Link
               href="/profile"
               className="tap flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-strong transition hover:brightness-95"
@@ -110,6 +112,7 @@ export default function NavBar({ userName }: { userName?: string }) {
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <NotificationBell />
             <Link
               href="/profile"
               className="tap flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-xs font-bold text-accent-strong"

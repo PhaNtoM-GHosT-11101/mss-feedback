@@ -14,9 +14,13 @@ export default async function AdminReportsPage({
 }: {
   searchParams: Promise<{ from?: string; to?: string; range?: string }>;
 }) {
-  await getCommittee();
+  const { messIds } = await getCommittee();
   const db = createAdminClient();
   const sp = await searchParams;
+  const scope = <T,>(q: T): T => {
+    if (messIds?.length) (q as unknown as { in: (col: string, vals: string[]) => void }).in("mess_id", messIds);
+    return q;
+  };
 
   const now = new Date();
   const days = sp.range === "90" ? 90 : sp.range === "7" ? 7 : 30;
@@ -31,17 +35,21 @@ export default async function AdminReportsPage({
 
   const [meals, dailyRatings, complaints, praises, profiles] = await Promise.all([
     db.from("meals").select("*").eq("is_active", true).order("sort_order"),
-    db
-      .from("ratings")
-      .select("rating_date, meal_id, stars")
-      .gte("rating_date", rangeStart)
-      .lte("rating_date", rangeEnd)
-      .order("rating_date", { ascending: true }),
-    db
-      .from("complaints")
-      .select("*, category:complaint_categories!complaint_complaint_category_id_fkey(name), mess:messes(name)")
-      .limit(5000),
-    db.from("praises").select("created_at").gte("created_at", rangeStart + "T00:00:00").lte("created_at", rangeEnd + "T23:59:59"),
+    scope(
+      db
+        .from("ratings")
+        .select("rating_date, meal_id, stars")
+        .gte("rating_date", rangeStart)
+        .lte("rating_date", rangeEnd)
+        .order("rating_date", { ascending: true }),
+    ),
+    scope(
+      db
+        .from("complaints")
+        .select("*, category:complaint_categories!complaint_complaint_category_id_fkey(name), mess:messes(name)")
+        .limit(5000),
+    ),
+    scope(db.from("praises").select("created_at").gte("created_at", rangeStart + "T00:00:00").lte("created_at", rangeEnd + "T23:59:59")),
     db.from("profiles").select("created_at").gte("created_at", rangeStart + "T00:00:00").lte("created_at", rangeEnd + "T23:59:59"),
   ]);
 

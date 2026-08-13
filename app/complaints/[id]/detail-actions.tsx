@@ -4,7 +4,58 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { revalidateComplaint } from "./actions";
 import { ArrowUp, Flag, Trash2 } from "lucide-react";
+import { IconCheck, IconWhatsApp } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
+
+export function CloseComplaint({ complaintId, title }: { complaintId: string; title: string }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function close() {
+    if (busy || done) return;
+    if (!confirm(`Mark "${title.slice(0, 60)}" as resolved? It will be closed on your side.`)) return;
+    setBusy(true);
+    setError(null);
+    const supabase = createClient();
+    const { error } = await supabase.rpc("close_own_complaint", { complaint_id: complaintId });
+    setBusy(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setDone(true);
+    await revalidateComplaint();
+    router.refresh();
+  }
+
+  return (
+    <button
+      onClick={close}
+      disabled={busy || done}
+      className="btn-primary tap flex items-center gap-1.5 px-3.5 py-1.5 text-xs disabled:opacity-50"
+    >
+      <IconCheck className="h-3.5 w-3.5" />
+      {done ? "Marked resolved" : busy ? "Closing…" : "Mark resolved"}
+      {error && <span className="ml-1 text-[10px] font-normal text-red-500">{error}</span>}
+    </button>
+  );
+}
+
+export function WhatsAppShare({ title }: { title: string }) {
+  return (
+    <button
+      onClick={() => {
+        const text = encodeURIComponent(`MSS Feedback — ${title}:\n${window.location.href}`);
+        window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
+      }}
+      className="tap flex items-center gap-1.5 rounded-full border border-border bg-surface2 px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-border"
+    >
+      <IconWhatsApp className="h-3.5 w-3.5 text-[#25D366]" /> Share
+    </button>
+  );
+}
 
 export function VoteBar({ complaintId, upvotes }: { complaintId: string; upvotes: number }) {
   const router = useRouter();

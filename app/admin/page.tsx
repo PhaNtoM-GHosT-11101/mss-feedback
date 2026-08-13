@@ -32,9 +32,13 @@ function Delta({ v, invert = false }: { v: number | null; invert?: boolean }) {
 }
 
 export default async function AdminDashboard() {
-  await getCommittee();
+  const { messIds } = await getCommittee();
   const db = createAdminClient();
   const today = todayISO();
+  const scope = <T,>(q: T): T => {
+    if (messIds?.length) (q as unknown as { in: (col: string, vals: string[]) => void }).in("mess_id", messIds);
+    return q;
+  };
 
   const since14 = new Date();
   since14.setDate(since14.getDate() - 13);
@@ -57,18 +61,18 @@ export default async function AdminDashboard() {
     newUsers,
     weekly,
   ] = await Promise.all([
-    db.from("complaints").select("status, upvote_count, category_id, created_at, updated_at"),
-    db.from("ratings").select("meal_id, stars, id").eq("rating_date", today).limit(5000),
-    db.from("ratings").select("stars, rating_date").gte("rating_date", weekAgoISO).limit(10000),
-    db.from("ratings").select("stars").gte("rating_date", prevWeekISO).lt("rating_date", weekAgoISO).limit(10000),
+    scope(db.from("complaints").select("status, upvote_count, category_id, created_at, updated_at")),
+    scope(db.from("ratings").select("meal_id, stars, id").eq("rating_date", today).limit(5000)),
+    scope(db.from("ratings").select("stars, rating_date").gte("rating_date", weekAgoISO).limit(10000)),
+    scope(db.from("ratings").select("stars").gte("rating_date", prevWeekISO).lt("rating_date", weekAgoISO).limit(10000)),
     db.from("profiles").select("id, is_banned", { count: "exact" }),
-    db.from("praises").select("id, text, praise_author, is_anonymous, created_at").order("created_at", { ascending: false }).limit(10),
-    db.from("complaints").select("id, title").eq("is_flagged", true).limit(50),
-    db.from("ratings").select("rating_date, meal_id, stars").gte("rating_date", since14ISO.slice(0, 10)).order("rating_date", { ascending: true }),
-    db.from("complaints").select("created_at").gte("created_at", since14ISO).order("created_at", { ascending: true }),
-    db.from("praises").select("created_at").gte("created_at", since14ISO).order("created_at", { ascending: true }),
-    db.from("profiles").select("created_at").gte("created_at", since14ISO).order("created_at", { ascending: true }),
-    db.from("complaints").select("status").gte("created_at", weekAgoISO),
+    scope(db.from("praises").select("id, text, praise_author, is_anonymous, created_at").order("created_at", { ascending: false }).limit(10)),
+    scope(db.from("complaints").select("id, title").eq("is_flagged", true).limit(50)),
+    scope(db.from("ratings").select("rating_date, meal_id, stars").gte("rating_date", since14ISO.slice(0, 10)).order("rating_date", { ascending: true })),
+    scope(db.from("complaints").select("created_at").gte("created_at", since14ISO).order("created_at", { ascending: true })),
+    scope(db.from("praises").select("created_at").gte("created_at", since14ISO).order("created_at", { ascending: true })),
+    scope(db.from("profiles").select("created_at").gte("created_at", since14ISO).order("created_at", { ascending: true })),
+    scope(db.from("complaints").select("status").gte("created_at", weekAgoISO)),
   ]);
 
   const all = complaints.data ?? [];

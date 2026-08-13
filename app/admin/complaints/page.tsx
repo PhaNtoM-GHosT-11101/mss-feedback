@@ -18,12 +18,13 @@ export default async function AdminComplaintsPage({
 }: {
   searchParams: Promise<{ sort?: string }>;
 }) {
-  await getCommittee();
+  const { messIds } = await getCommittee();
   const db = createAdminClient();
   const sp = await searchParams;
   const sort = sp.sort === "latest" ? "latest" : "upvotes";
 
   const complaintsQuery = db.from("complaints").select("*, profiles!complaints_user_id_fkey(full_name, roll_no)");
+  if (messIds?.length) complaintsQuery.in("mess_id", messIds);
   if (sort === "upvotes") complaintsQuery.order("upvote_count", { ascending: false });
   complaintsQuery.order("created_at", { ascending: false });
 
