@@ -209,7 +209,7 @@ export async function saveGeneralSettings(data: {
 // ---------- Menu & Announcements ----------
 
 export async function saveMenuItems(
-  items: { id?: string; meal_id: string; item_text: string; menu_date: string | null; weekday: number | null; is_template: boolean }[],
+  items: { id?: string; meal_id: string; item_text: string; menu_date: string | null; weekday: number | null; is_template: boolean; mess_id?: string | null }[],
 ) {
   const db = await adminDb();
   for (const it of items) {
@@ -220,6 +220,15 @@ export async function saveMenuItems(
     }
   }
   revalidatePath("/admin/menu");
+}
+
+export async function setMessMealActive(messId: string, mealId: string, isActive: boolean) {
+  const db = await adminDb();
+  await db
+    .from("mess_meal_settings")
+    .upsert({ mess_id: messId, meal_id: mealId, is_active: isActive }, { onConflict: "mess_id,meal_id" });
+  revalidatePath("/admin/menu");
+  revalidatePath("/");
 }
 
 export async function deleteMenuItem(id: string) {

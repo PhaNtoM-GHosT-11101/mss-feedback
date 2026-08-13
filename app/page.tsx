@@ -13,15 +13,16 @@ import type { Complaint, Meal, Praise } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 const getShared = unstable_cache(
-  async (today: string, dow: number) => {
+  async (today: string, dow: number, messId: string) => {
     const db = createAdminClient();
-    const [meals, menuRaw, ratingsToday, announcements, top, praises] =
+    const [meals, menuRaw, ratingsToday, announcements, top, praises, mealSettings] =
       await Promise.all([
         db.from("meals").select("*").eq("is_active", true).order("sort_order"),
         db
           .from("menu_items")
           .select("*")
           .or(`menu_date.eq.${today},and(is_template.eq.true,weekday.eq.${dow})`)
+          .or(`mess_id.eq.${messId},mess_id.is.null`)
           .limit(50),
         db.from("ratings").select("meal_id, stars").eq("rating_date", today).limit(5000),
         db
@@ -41,8 +42,12 @@ const getShared = unstable_cache(
           .select("id, text, is_anonymous, created_at, praise_author")
           .order("created_at", { ascending: false })
           .limit(3),
+        db
+          .from("mess_meal_settings")
+          .select("meal_id, is_active")
+          .eq("mess_id", messId),
       ]);
-    return { meals, menuRaw, ratingsToday, announcements, top, praises };
+    return { meals, menuRaw, ratingsToday, announcements, top, praises, mealSettings };
   },
   ["home-shared"],
   { revalidate: 60 },
@@ -89,8 +94,15 @@ export default async function HomePage() {
   const today = todayISO();
   const dow = new Date().getUTCDay();
 
-  const { meals, menuRaw, ratingsToday, announcements, top, praises } =
-    await getShared(today, dow);
+  const { meals, menuRaw, ratingsToday, announcements, top, praises, mealSettings } =
+    await getShared(today, dow, messId);
+
+  const activeMealIds = new Set(
+    (mealSettings.data ?? [])
+      .filter((s: { is_active: boolean }) => s.is_active)
+      .map((s: { meal_id: string }) => s.meal_id),
+  );
+  const messMeals = (meals.data ?? []).filter((m: Meal) => activeMealIds.has(m.id));
 
   const perMeal = new Map<string, { sum: number; count: number }>();
   for (const row of (ratingsToday.data ?? []) as { meal_id: string; stars: number }[]) {
@@ -130,7 +142,7 @@ export default async function HomePage() {
   const bestMeal = allAvg.length
     ? [...averages.entries()].sort((a, b) => b[1].avg - a[1].avg)[0]
     : null;
-  const mealsList = meals.data ?? [];
+  const mealsList = messMeals;
 
   return (
     <div className="mx-auto max-w-2xl px-4 md:ml-60">
@@ -191,7 +203,7 @@ export default async function HomePage() {
         <span className="text-[11px] text-muted">{today}</span>
       </div>
       <div className="stagger grid gap-3 sm:grid-cols-2">
-        {(meals.data ?? []).map((meal: Meal) => {
+        {messMeals.map((meal: Meal) => {
           const my = myRatings.find(
             (r: { meal_id: string }) => r.meal_id === meal.id,
           );
@@ -211,7 +223,7 @@ export default async function HomePage() {
 
       <h2 className="section-label mb-3 mt-8">Today&apos;s menu</h2>
       <div className="card p-4">
-        {(meals.data ?? []).map((meal: Meal, i: number) => {
+        {messMeals.map((meal: Meal, i: number) => {
           const items = menuByMeal.get(meal.id) ?? [];
           const c = mealColor(meal);
           return (

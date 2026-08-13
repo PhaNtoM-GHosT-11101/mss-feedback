@@ -33,13 +33,16 @@ export default async function StatsPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profile }, { data: mealsRaw }, { data: ratings30 }, { data: complaints }] =
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, mess_id, mess:messes(name)")
+    .eq("id", user.id)
+    .single() as unknown as { data: { full_name: string | null; mess_id: string | null; mess: { name: string } | null } | null };
+
+  const messId = profile?.mess_id ?? null;
+
+  const [{ data: mealsRaw }, { data: ratings30 }, { data: complaints }, { data: mealSettings }] =
     await Promise.all([
-      supabase
-        .from("profiles")
-        .select("full_name, mess_id, mess:messes(name)")
-        .eq("id", user.id)
-        .single() as unknown as { data: { full_name: string | null; mess_id: string | null; mess: { name: string } | null } | null },
       createAdminClient().from("meals").select("id, name, start_hour, end_hour, sort_order, is_active").eq("is_active", true).order("sort_order") as unknown as { data: Meal[] | null },
       createAdminClient()
         .from("ratings")
@@ -51,10 +54,16 @@ export default async function StatsPage() {
         .select("status, created_at, updated_at, mess_id")
         .eq("is_flagged", false)
         .limit(5000),
+      createAdminClient()
+        .from("mess_meal_settings")
+        .select("meal_id, is_active")
+        .eq("mess_id", messId ?? "") as unknown as { data: { meal_id: string; is_active: boolean }[] | null },
     ]);
-
-  const meals = (mealsRaw ?? []) as Meal[];
-  const messId = profile?.mess_id ?? null;
+  const meals = ((mealsRaw ?? []) as Meal[]).filter((m) =>
+    messId
+      ? (mealSettings ?? []).find((s) => s.meal_id === m.id)?.is_active !== false
+      : true,
+  );
   const ratings = (ratings30 ?? []) as { meal_id: string; stars: number; rating_date: string }[];
   const myComplaints = ((complaints ?? []) as { status: string; created_at: string; updated_at: string; mess_id: string | null }[]).filter(
     (c) => !messId || c.mess_id === messId || c.mess_id === null,
