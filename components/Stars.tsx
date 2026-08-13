@@ -31,8 +31,8 @@ export default function Stars({
             viewBox="0 0 24 24"
             className={`${cls} ${
               n <= Math.round(value)
-                ? "fill-amber-400"
-                : "fill-gray-300 dark:fill-gray-600"
+                ? "fill-[#F4B942]"
+                : "fill-[#EAD9B2] dark:fill-[#4A3B2C]"
             }`}
           >
             <path d="M12 2l2.9 6.26 6.86.56-5.22 4.5 1.58 6.68L12 16.9l-6.12 3.1 1.58-6.68-5.22-4.5 6.86-.56L12 2z" />
@@ -45,11 +45,11 @@ export default function Stars({
 
 export function AverageStars({ avg }: { avg: number | null }) {
   if (avg === null || avg === undefined) {
-    return <span className="text-sm text-gray-400">—</span>;
+    return <span className="text-sm text-[#C9B693]">—</span>;
   }
   return (
     <span className="flex items-center gap-1 text-sm font-medium">
-      <span className="text-amber-500">★</span>
+      <span className="text-[#F4B942]">★</span>
       {avg.toFixed(1)}
     </span>
   );

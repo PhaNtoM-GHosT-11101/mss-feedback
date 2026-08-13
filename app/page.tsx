@@ -121,14 +121,14 @@ export default async function HomePage() {
           {announcements.data.map((a) => (
             <div
               key={a.id}
-              className="rounded-xl border border-emerald-200/70 bg-emerald-50/70 p-3.5 dark:border-emerald-900 dark:bg-emerald-950/40"
+              className="rounded-xl border border-[#EF5A2A]/25 bg-[#FFF0E4]/80 p-3.5 dark:border-[#EF5A2A]/30 dark:bg-[#2E1D14]"
             >
-              <p className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-[#B23A10] dark:text-[#FF8A75]">
                 <Sparkles className="h-3.5 w-3.5" />
                 {a.title}
               </p>
               {a.body && (
-                <p className="mt-0.5 text-sm text-emerald-700/90 dark:text-emerald-400/90">
+                <p className="mt-0.5 text-sm text-[#8A5A30]/90 dark:text-[#E0B08A]/90">
                   {a.body}
                 </p>
               )}

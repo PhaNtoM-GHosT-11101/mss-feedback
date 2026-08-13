@@ -20,13 +20,13 @@ export default function NavBar({ userName }: { userName?: string }) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-gray-200/80 bg-background/85 backdrop-blur-md dark:border-zinc-800/80">
+      <header className="sticky top-0 z-40 border-b border-[#EAD9B2]/60 bg-background/85 backdrop-blur-md dark:border-[#3A2E20]">
         <div className="mx-auto flex h-14 max-w-2xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-[10px] font-bold tracking-wide text-white dark:bg-white dark:text-zinc-900">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-b from-[#FF6B3D] to-[#EF5A2A] text-[10px] font-bold tracking-wide text-white shadow-[0_2px_8px_-2px_rgb(239_90_42/0.6)]">
               MSS
             </span>
-            <span className="text-sm font-semibold tracking-tight">
+            <span className="font-display text-[15px] font-bold tracking-tight text-[#3B2A14] dark:text-[#F4E9DE]">
               MSS Feedback
             </span>
           </Link>
@@ -39,7 +39,7 @@ export default function NavBar({ userName }: { userName?: string }) {
             <ThemeToggle />
             <Link
               href="/profile"
-              className="tap flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-600 transition hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              className="tap flex h-8 w-8 items-center justify-center rounded-full bg-[#F6E9CF] text-xs font-semibold text-[#5B4326] transition hover:bg-[#EAD9B2] dark:bg-[#2E241A] dark:text-[#E6D7C3] dark:hover:bg-[#3A2E20]"
               aria-label="Profile"
             >
               {(userName ?? "?")[0]?.toUpperCase()}
@@ -48,7 +48,7 @@ export default function NavBar({ userName }: { userName?: string }) {
         </div>
       </header>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200/80 bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md dark:border-zinc-800/80">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#EAD9B2]/60 bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md dark:border-[#3A2E20]">
         <div className="mx-auto grid max-w-2xl grid-cols-4">
           {tabs.map((t) => {
             const active = isActive(t.href);
@@ -58,14 +58,14 @@ export default function NavBar({ userName }: { userName?: string }) {
                 href={t.href}
                 className={`tap flex flex-col items-center gap-1 py-2.5 text-[10px] font-semibold tracking-wide transition ${
                   active
-                    ? "text-zinc-900 dark:text-white"
-                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                    ? "text-[#3B2A14] dark:text-[#F4E9DE]"
+                    : "text-[#A0835C] hover:text-[#5B4326] dark:text-[#8C7A5F] dark:hover:text-[#D9C7A8]"
                 }`}
               >
                 <span
                   className={`flex h-7 w-12 items-center justify-center rounded-full transition ${
                     active
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                      ? "bg-[#EF5A2A] text-white"
                       : ""
                   }`}
                 >
