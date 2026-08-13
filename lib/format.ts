@@ -37,12 +37,12 @@ export function statusLabel(status: string): string {
 export function statusColor(status: string): string {
   switch (status) {
     case "new":
-      return "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300";
+      return "badge badge-new";
     case "in_progress":
-      return "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300";
+      return "badge badge-in_progress";
     case "resolved":
-      return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300";
+      return "badge badge-resolved";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "badge bg-gray-100 text-gray-700";
   }
 }

@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
-import { ArrowUpRight, Plus, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import NavBar from "@/components/NavBar";
 import RateMeal from "@/components/RateMeal";
+import { IconPraise, IconComplaint, IconArrowUp, IconTrendingUp } from "@/components/icons";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
-import { todayISO, todayMenuItems } from "@/lib/meal";
+import { todayISO, todayMenuItems, mealColor } from "@/lib/meal";
 import type { Complaint, Meal, Praise } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -112,36 +112,85 @@ export default async function HomePage() {
     menuByMeal.set(item.meal_id, list);
   }
 
+  const now = new Date();
+  const hour = now.getHours();
+  const greeting =
+    hour < 5 ? "Burning the midnight oil" : hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const fullDate = now.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
+  const allAvg = [...averages.values()];
+  const todayAvg = allAvg.length
+    ? allAvg.reduce((s, a) => s + a.avg, 0) / allAvg.length
+    : null;
+  const ratedTotal = allAvg.reduce((s, a) => s + a.count, 0);
+  const bestMeal = allAvg.length
+    ? [...averages.entries()].sort((a, b) => b[1].avg - a[1].avg)[0]
+    : null;
+  const mealsList = meals.data ?? [];
+
   return (
-    <div className="mx-auto max-w-2xl px-4">
+    <div className="mx-auto max-w-2xl px-4 md:ml-60">
       <NavBar userName={profile?.full_name} />
 
+      {/* Greeting */}
+      <div className="pt-3">
+        <p className="section-label">{fullDate}</p>
+        <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">
+          {greeting}, {profile?.full_name?.split(" ")[0] ?? "there"} 👋
+        </h1>
+      </div>
+
+      {/* Mini stats strip */}
+      <div className="stagger mt-4 grid grid-cols-3 gap-2">
+        <div className="card card-hover p-3">
+          <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted">
+            <IconTrendingUp className="h-3 w-3" /> Today avg
+          </p>
+          <p className="mt-1 font-display text-2xl font-bold text-foreground">
+            {todayAvg !== null ? todayAvg.toFixed(1) : "—"}
+            <span className="text-sm text-muted">/5</span>
+          </p>
+        </div>
+        <div className="card card-hover p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Ratings</p>
+          <p className="mt-1 font-display text-2xl font-bold text-foreground">{ratedTotal}</p>
+        </div>
+        <div className="card card-hover p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Top meal</p>
+          <p className="mt-1 truncate font-display text-xl font-bold text-foreground">
+            {bestMeal ? mealsList.find((m) => m.id === bestMeal[0])?.name ?? "—" : "—"}
+          </p>
+        </div>
+      </div>
+
       {announcements.data && announcements.data.length > 0 && (
-        <div className="mb-4 space-y-2">
+        <div className="stagger mt-4 space-y-2">
           {announcements.data.map((a) => (
             <div
               key={a.id}
-              className="rounded-xl border border-[#EF5A2A]/25 bg-[#FFF0E4]/80 p-3.5 dark:border-[#EF5A2A]/30 dark:bg-[#2E1D14]"
+              className="card flex items-start gap-3 border-[--accent]/30 bg-[--accent-soft]/60 p-3.5"
             >
-              <p className="flex items-center gap-1.5 text-sm font-semibold text-[#B23A10] dark:text-[#FF8A75]">
-                <Sparkles className="h-3.5 w-3.5" />
-                {a.title}
-              </p>
-              {a.body && (
-                <p className="mt-0.5 text-sm text-[#8A5A30]/90 dark:text-[#E0B08A]/90">
-                  {a.body}
-                </p>
-              )}
+              <span className="text-lg leading-none">📢</span>
+              <div>
+                <p className="text-sm font-semibold text-foreground">{a.title}</p>
+                {a.body && (
+                  <p className="mt-0.5 text-sm text-muted">{a.body}</p>
+                )}
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="section-label">Today&apos;s ratings</h2>
-        <span className="text-[11px] text-zinc-400">{today}</span>
+      <div className="mb-3 mt-6 flex items-baseline justify-between">
+        <h2 className="section-label">Rate today&apos;s meals</h2>
+        <span className="text-[11px] text-muted">{today}</span>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="stagger grid gap-3 sm:grid-cols-2">
         {(meals.data ?? []).map((meal: Meal) => {
           const my = myRatings.find(
             (r: { meal_id: string }) => r.meal_id === meal.id,
@@ -164,24 +213,23 @@ export default async function HomePage() {
       <div className="card p-4">
         {(meals.data ?? []).map((meal: Meal, i: number) => {
           const items = menuByMeal.get(meal.id) ?? [];
+          const c = mealColor(meal);
           return (
             <div
               key={meal.id}
-              className={`flex items-center gap-3 py-2 ${
-                i > 0 ? "border-t border-zinc-100 dark:border-zinc-800" : "pt-0"
+              className={`flex items-center gap-3 py-2.5 ${
+                i > 0 ? "border-t border-border" : "pt-0"
               }`}
             >
-              <span className="w-6 text-center text-lg">{["🍞", "🍛", "🍵", "🍜"][i] ?? "🍽️"}</span>
+              <span className={`h-2 w-2 shrink-0 rounded-full ${c.dot}`} />
               <div className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
-                <span className="text-sm font-medium">{meal.name}</span>
+                <span className="font-display text-sm font-semibold">{meal.name}</span>
                 {items.length > 0 ? (
-                  <span className="truncate text-right text-sm text-zinc-500 dark:text-zinc-400">
+                  <span className="truncate text-right text-sm text-muted">
                     {items.map((i) => i.item_text).join(", ")}
                   </span>
                 ) : (
-                  <span className="text-xs text-zinc-300 dark:text-zinc-600">
-                    not posted
-                  </span>
+                  <span className="text-xs text-muted/60">not posted</span>
                 )}
               </div>
             </div>
@@ -192,15 +240,15 @@ export default async function HomePage() {
       <div className="mt-6 flex gap-3">
         <Link
           href="/complaints/new"
-          className="btn-primary flex flex-1 items-center justify-center gap-1.5"
+          className="btn btn-primary flex flex-1 items-center justify-center gap-1.5"
         >
-          <Plus className="h-4 w-4" /> File a complaint
+          <IconComplaint className="h-4 w-4" /> File a complaint
         </Link>
         <Link
           href="/praise"
-          className="btn-ghost flex flex-1 items-center justify-center gap-1.5"
+          className="btn btn-accent flex flex-1 items-center justify-center gap-1.5"
         >
-          👏 Give praise
+          <IconPraise className="h-4 w-4" /> Give praise
         </Link>
       </div>
 
@@ -208,14 +256,14 @@ export default async function HomePage() {
         <h2 className="section-label">Top issues</h2>
         <Link
           href="/complaints"
-          className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+          className="text-[11px] font-medium text-muted hover:text-foreground"
         >
           View all
         </Link>
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {(top.data ?? []).length === 0 && (
-          <p className="card border-dashed p-5 text-center text-sm text-zinc-400 sm:col-span-2">
+          <p className="card border-dashed p-5 text-center text-sm text-muted sm:col-span-2">
             No complaints yet — be the first voice.
           </p>
         )}
@@ -225,25 +273,21 @@ export default async function HomePage() {
             href={`/complaints/${c.id}`}
             className="card card-hover group flex items-start gap-3 p-3.5"
           >
-            <div className="flex flex-col items-center rounded-lg bg-zinc-50 px-2 py-1 dark:bg-zinc-900">
+            <div className="flex flex-col items-center rounded-lg bg-[--surface-2] px-2 py-1">
               <span className="text-sm font-bold">{c.upvote_count}</span>
-              <span className="text-[10px] text-zinc-400">▲</span>
+              <IconArrowUp className="h-3 w-3 text-muted" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{c.title}</p>
-              <div className="mt-1 flex items-center gap-2 text-xs text-zinc-400">
-                <span
-                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${statusColor(c.status)}`}
-                >
-                  {statusLabel(c.status)}
-                </span>
+              <div className="mt-1 flex items-center gap-2 text-xs text-muted">
+                <span className={statusColor(c.status)}>{statusLabel(c.status)}</span>
                 {c.complaint_author && (
                   <span className="truncate">{c.complaint_author}</span>
                 )}
                 <span>{timeAgo(c.created_at)}</span>
               </div>
             </div>
-            <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-300 transition group-hover:text-zinc-500" />
+            <IconArrowUp className="hidden h-4 w-4 shrink-0 rotate-45 text-muted transition group-hover:text-foreground" />
           </Link>
         ))}
       </div>
@@ -252,21 +296,21 @@ export default async function HomePage() {
         <h2 className="section-label">Recent praise</h2>
         <Link
           href="/praise"
-          className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+          className="text-[11px] font-medium text-muted hover:text-foreground"
         >
           View all
         </Link>
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {(praises.data ?? []).length === 0 && (
-          <p className="card border-dashed p-5 text-center text-sm text-zinc-400 sm:col-span-2">
+          <p className="card border-dashed p-5 text-center text-sm text-muted sm:col-span-2">
             No praise yet — your mess staff would love one.
           </p>
         )}
         {((praises.data ?? []) as Praise[]).map((p) => (
           <div key={p.id} className="card p-3.5 text-sm">
             <p>{p.text}</p>
-            <p className="mt-1 text-xs text-zinc-400">
+            <p className="mt-1 text-xs text-muted">
               {p.is_anonymous || !p.praise_author
                 ? "Anonymous"
                 : p.praise_author}{" "}

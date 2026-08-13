@@ -9,6 +9,48 @@ export function mealEmoji(meal: { name: string }): string {
   return "🍽️";
 }
 
+export function mealColor(meal: { name: string }): {
+  iconBg: string;
+  chip: string;
+  accent: string;
+  dot: string;
+} {
+  const n = meal.name.toLowerCase();
+  if (/morning|breakfast|सुबह/.test(n)) {
+    return {
+      iconBg: "bg-[--meal-breakfast-soft]",
+      chip: "bg-[--meal-breakfast-soft] text-[--accent-strong]",
+      accent: "var(--meal-breakfast)",
+      dot: "bg-[--meal-breakfast]",
+    };
+  }
+  if (/afternoon|lunch|दोपहर/.test(n)) {
+    return {
+      iconBg: "bg-[--meal-lunch-soft]",
+      chip: "bg-[--meal-lunch-soft] text-[#C4503B] dark:text-[#E5765F]",
+      accent: "var(--meal-lunch)",
+      dot: "bg-[--meal-lunch]",
+    };
+  }
+  if (/night|dinner|रात/.test(n)) {
+    return {
+      iconBg: "bg-[--meal-dinner-soft]",
+      chip: "bg-[--meal-dinner-soft] text-[--plum]",
+      accent: "var(--meal-dinner)",
+      dot: "bg-[--meal-dinner]",
+    };
+  }
+  return {
+    iconBg: "bg-[--surface-2]",
+    chip: "bg-[--surface-2] text-[--muted]",
+    accent: "var(--accent)",
+    dot: "bg-[--accent]",
+  };
+}
+
+export const RATING_FACES = ["😖", "😕", "😐", "🙂", "🤩"];
+export const RATING_FACE_LABELS = ["Awful", "Meh", "Okay", "Good", "Amazing!"];
+
 export function isMealOpen(meal: Meal, date = new Date()): boolean {
   const hour = Number(
     new Intl.DateTimeFormat("en-GB", {
