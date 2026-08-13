@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconBell, IconCheck } from "./icons";
 import { createClient } from "@/lib/supabase/client";
@@ -20,13 +20,13 @@ export default function NotificationBell({ className = "" }: { className?: strin
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[]>([]);
   const [unread, setUnread] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
     let userId: string | null = null;
     async function load() {
+      if (cancelled) return;
       const supabase = createClient();
       let query = supabase
         .from("notifications")
@@ -39,32 +39,24 @@ export default function NotificationBell({ className = "" }: { className?: strin
       setItems(data as unknown as Notification[]);
       setUnread((data as unknown as Notification[]).filter((n) => !n.read).length);
     }
-    (async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      userId = user?.id ?? null;
-      load();
-    })();
-    const supabase = createClient();
-    const channel = supabase
-      .channel("notifications-live")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notifications" },
-        () => load(),
-      )
-      .subscribe();
+    createClient()
+      .auth.getUser()
+      .then(({ data }) => {
+        userId = data.user?.id ?? null;
+        load();
+      })
+      .catch(() => {});
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
     return () => {
       cancelled = true;
-      supabase.removeChannel(channel);
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (!(e.target as HTMLElement).closest("[data-bell-root]")) setOpen(false);
     };
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
@@ -81,7 +73,7 @@ export default function NotificationBell({ className = "" }: { className?: strin
   }
 
   return (
-    <div ref={ref} className={`relative ${className}`}>
+    <div data-bell-root className={`relative ${className}`}>
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Notifications"
