@@ -5,7 +5,7 @@ import "@fontsource-variable/shantell-sans";
 import "./fonts.css";
 import Playground from "./playground";
 
-export const metadata = { title: "Theme Playground — MSS Feedback" };
+export const metadata = { title: "Theme Playground — Campus Feedback" };
 
 export default function PlaygroundPage() {
   return <Playground />;

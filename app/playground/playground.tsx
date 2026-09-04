@@ -186,9 +186,9 @@ function MockHome({ s }: { s: Scheme }) {
               className={`flex h-8 w-8 items-center justify-center text-[10px] font-black tracking-tight ${s.radius}`}
               style={{ background: t.accent, color: t.accentText }}
             >
-              MSS
+              CF
             </span>
-            <span className={`${s.font} text-[15px] font-bold tracking-tight`}>MSS Feedback</span>
+            <span className={`${s.font} text-[15px] font-bold tracking-tight`}>Campus Feedback</span>
           </div>
           <span
             className={`flex h-8 w-8 items-center justify-center ${s.radius} text-[11px] font-bold`}
@@ -369,7 +369,7 @@ export default function Playground() {
     <main className="min-h-screen bg-zinc-950 pb-16 text-zinc-100">
       <div className="mx-auto max-w-7xl px-5 pt-10">
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-          MSS Feedback · Design playground
+          Campus Feedback · Design playground
         </p>
         <h1 className="mt-2 text-3xl font-black tracking-tight">
           Pick the looks you like<span className="text-emerald-400">.</span>

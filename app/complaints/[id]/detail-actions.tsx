@@ -47,7 +47,7 @@ export function WhatsAppShare({ title }: { title: string }) {
   return (
     <button
       onClick={() => {
-        const text = encodeURIComponent(`MSS Feedback — ${title}:\n${window.location.href}`);
+        const text = encodeURIComponent(`Campus Feedback — ${title}:\n${window.location.href}`);
         window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
       }}
       className="tap flex items-center gap-1.5 rounded-full border border-border bg-surface2 px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-border"

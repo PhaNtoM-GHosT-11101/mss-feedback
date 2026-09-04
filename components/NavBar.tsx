@@ -30,7 +30,7 @@ export function Wordmark({
       {!compact && (
         <span className="flex flex-col leading-none">
           <span className="font-display text-[15px] font-bold tracking-tight text-foreground">
-            {institutionName ?? "MSS Feedback"}
+            {institutionName ?? "Campus Feedback"}
           </span>
           <span className="mt-0.5 text-[10px] font-medium text-muted">
             {institutionName ? "Mess made better" : "Rate · Raise · Praise"}

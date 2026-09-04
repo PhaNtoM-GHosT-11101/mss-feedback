@@ -33,7 +33,7 @@ export default async function AdminLayout({
               </span>
               <span className="flex flex-col leading-none">
                 <span className="font-display text-[15px] font-bold tracking-tight">
-                  MSS Admin
+                  Campus Admin
                   {isAdmin && (
                     <span className="ml-1.5 align-middle rounded bg-accent-soft px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-accent-strong">
                       SUPER
@@ -83,7 +83,7 @@ export default async function AdminLayout({
               <IconShield className="h-4 w-4" strokeWidth={1.9} />
             </span>
             <span className="font-display text-sm font-bold">
-              MSS Admin
+              Campus Admin
               {isAdmin && (
                 <span className="ml-1.5 rounded bg-accent-soft px-1.5 py-0.5 text-[9px] font-bold text-accent-strong">
                   SUPER

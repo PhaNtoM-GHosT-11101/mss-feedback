@@ -3,9 +3,9 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "MSS Feedback — NIT Agartala",
+  title: "Campus Feedback",
   description:
-    "Complaints, daily food ratings and praise for the NIT Agartala Mess & Service Society.",
+    "Complaints, daily food ratings and praise for your campus mess and hostel life.",
 };
 
 export const viewport: Viewport = {

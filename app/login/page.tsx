@@ -20,7 +20,7 @@ function BrandPanel() {
           <IconPlate className="h-5 w-5" strokeWidth={1.7} />
         </span>
         <span className="font-display text-lg font-bold tracking-tight">
-          MSS Feedback
+          Campus Feedback
         </span>
       </div>
 
@@ -60,7 +60,7 @@ function BrandPanel() {
       </div>
 
       <p className="relative text-xs text-[#6F8573]">
-        NIT Agartala · Mess &amp; Service Society
+        Campus · Mess &amp; Service Society
       </p>
     </div>
   );
@@ -104,12 +104,12 @@ function LoginForm() {
             <IconPlate className="h-7 w-7" strokeWidth={1.7} />
           </div>
           <h1 className="font-display text-2xl font-bold tracking-tight">
-            MSS Feedback
+            Campus Feedback
           </h1>
           <p className="mt-1.5 text-sm text-muted">
             Rate · Raise · Praise
             <br />
-            NIT Agartala · Mess &amp; Service Society
+            Campus · Mess &amp; Service Society
           </p>
         </div>
 
