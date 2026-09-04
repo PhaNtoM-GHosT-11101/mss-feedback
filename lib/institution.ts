@@ -133,6 +133,7 @@ const RESERVED_HAS = (s: string) =>
     "login",
     "onboard",
     "complaints",
+    "mess",
     "admin",
     "stats",
     "praise",

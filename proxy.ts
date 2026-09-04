@@ -10,6 +10,7 @@ const RESERVED = new Set([
   "login",
   "onboard",
   "complaints",
+  "mess",
   "admin",
   "stats",
   "praise",

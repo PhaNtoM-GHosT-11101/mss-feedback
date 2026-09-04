@@ -175,7 +175,7 @@ export default function NewComplaintPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={120}
-            placeholder="e.g. Roti was served cold"
+            placeholder="e.g. No water in my hostel block"
             className="input mt-1.5"
           />
         </div>
@@ -187,7 +187,7 @@ export default function NewComplaintPage() {
             onChange={(e) => setDescription(e.target.value)}
             maxLength={2000}
             rows={4}
-            placeholder="Describe the issue — what happened, when, which meal…"
+            placeholder="Describe the issue — what happened, where, when…"
             className="input mt-1.5 resize-none"
           />
         </div>

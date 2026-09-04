@@ -5,12 +5,12 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "./theme-provider";
 import NotificationBell from "./NotificationBell";
-import { IconHome, IconStats, IconComplaint, IconPraise, IconProfile, IconPlate } from "./icons";
+import { IconHome, IconComplaint, IconPraise, IconProfile, IconPlate } from "./icons";
 
 const tabs = [
   { href: "/", label: "Home", Icon: IconHome },
-  { href: "/stats", label: "Stats", Icon: IconStats },
   { href: "/complaints", label: "Issues", Icon: IconComplaint },
+  { href: "/mess", label: "Mess", Icon: IconPlate },
   { href: "/praise", label: "Praise", Icon: IconPraise },
   { href: "/profile", label: "Profile", Icon: IconProfile },
 ];
@@ -33,7 +33,7 @@ export function Wordmark({
             {institutionName ?? "Campus Feedback"}
           </span>
           <span className="mt-0.5 text-[10px] font-medium text-muted">
-            {institutionName ? "Mess made better" : "Rate · Raise · Praise"}
+            {institutionName ? "Campus feedback hub" : "Rate · Raise · Praise"}
           </span>
         </span>
       )}

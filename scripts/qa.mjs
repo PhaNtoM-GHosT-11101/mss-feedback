@@ -121,7 +121,7 @@ async function main() {
   record("AUTH: anonymous slug -> login w/ next", r.status === 307 && (r.headers.get("location") ?? "").includes("next=%2Fnit-agartala"), `status ${r.status} loc ${r.headers.get("location") ?? ""}`);
   r = await request("/login");
   record("AUTH: /login renders public", r.status === 200);
-  for (const p of ["/complaints", "/praise", "/profile", "/complaints/new", "/onboard", "/admin"]) {
+  for (const p of ["/complaints", "/praise", "/profile", "/complaints/new", "/onboard", "/mess", "/admin"]) {
     const rr = await request(p, { cookie: cookieSlug });
     const ok = p === "/admin" ? rr.status === 307 : rr.status === 200;
     record(`NAV: GET ${p}`, ok, `status ${rr.status}`);
