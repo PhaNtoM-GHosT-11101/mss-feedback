@@ -78,7 +78,7 @@ export default async function ComplaintsPage({
 
   return (
     <div className="mx-auto max-w-2xl px-4 md:ml-60">
-      <NavBar institutionName={institution.name} />
+      <NavBar institutionName={institution.name} tagline={institution.tagline} />
 
       <div className="flex items-center justify-between pt-2">
         <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">

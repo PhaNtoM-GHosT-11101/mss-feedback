@@ -18,14 +18,24 @@ const tabs = [
 export function Wordmark({
   compact = false,
   institutionName,
+  tagline,
 }: {
   compact?: boolean;
   institutionName?: string;
+  tagline?: string | null;
 }) {
+  const initials = (institutionName ?? "CF")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("");
   return (
     <span className="flex items-center gap-2.5">
-      <span className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-b from-[#F0AE3C] to-[#E8A020] text-[#241A04] shadow-[0_3px_12px_-3px_rgb(232_160_32/0.6)]">
-        <IconPlate className="h-5 w-5" strokeWidth={1.7} />
+      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[--accent] text-[--accent-ink] shadow-[0_3px_12px_-3px_rgb(0_0_0/0.35)]">
+        <span className="font-display text-[13px] font-extrabold tracking-tight">
+          {initials}
+        </span>
       </span>
       {!compact && (
         <span className="flex flex-col leading-none">
@@ -33,7 +43,7 @@ export function Wordmark({
             {institutionName ?? "Campus Feedback"}
           </span>
           <span className="mt-0.5 text-[10px] font-medium text-muted">
-            {institutionName ? "Campus feedback hub" : "Rate · Raise · Praise"}
+            {tagline || (institutionName ? "Campus feedback hub" : "File · Track · Praise")}
           </span>
         </span>
       )}
@@ -44,9 +54,11 @@ export function Wordmark({
 export default function NavBar({
   userName,
   institutionName,
+  tagline,
 }: {
   userName?: string;
   institutionName?: string;
+  tagline?: string | null;
 }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
@@ -67,7 +79,7 @@ export default function NavBar({
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border bg-surface/70 backdrop-blur-xl md:flex">
         <div className="px-5 pb-6 pt-7">
           <Link href="/" className="inline-block">
-            <Wordmark institutionName={institutionName} />
+            <Wordmark institutionName={institutionName} tagline={tagline} />
           </Link>
         </div>
 
@@ -120,7 +132,7 @@ export default function NavBar({
       >
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4">
           <Link href="/" className={scrolled ? "scale-95" : ""} style={{ transition: "transform .3s ease" }}>
-            <Wordmark compact={scrolled} institutionName={institutionName} />
+            <Wordmark compact={scrolled} institutionName={institutionName} tagline={tagline} />
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />

@@ -30,7 +30,7 @@ export default async function PraisePage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 md:ml-60">
-      <NavBar institutionName={institution.name} />
+      <NavBar institutionName={institution.name} tagline={institution.tagline} />
 
       <h1 className="flex items-center gap-2 pt-2 font-display text-2xl font-bold tracking-tight">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[--sage-soft] text-[--sage]">

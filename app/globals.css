@@ -515,3 +515,76 @@ h1, h2, h3, h4 {
   animation: confetti-fall 1.1s ease-in forwards;
   pointer-events: none;
 }
+
+/* ============================================================
+   Per-college themes — each institution renders with its own
+   accent identity, so a college reads as its own product.
+   Set on <html data-college="..."> by the CollegeTheme component.
+   ============================================================ */
+
+/* ---- crimson ---- */
+html[data-college="crimson"] {
+  --accent: #D6402A; --accent-strong: #B22E1B; --accent-soft: #FBE0D8; --accent-ink: #3B0F07;
+  --meal-lunch: #D6402A; --meal-lunch-soft: #FBE0D8;
+  --chart-1: #D6402A; --chart-4: #D6402A;
+}
+html[data-college="crimson"][data-theme="dark"] {
+  --accent: #E06A54; --accent-strong: #F08A72; --accent-soft: #3A1710; --accent-ink: #1A0704;
+}
+
+/* ---- emerald ---- */
+html[data-college="emerald"] {
+  --accent: #1E8A5A; --accent-strong: #156E46; --accent-soft: #D8F0E2; --accent-ink: #062B18;
+  --sage: #1E8A5A; --sage-soft: #D8F0E2;
+  --chart-1: #1E8A5A;
+}
+html[data-college="emerald"][data-theme="dark"] {
+  --accent: #35B97D; --accent-strong: #4FCF92; --accent-soft: #123528; --accent-ink: #06180F;
+}
+
+/* ---- indigo ---- */
+html[data-college="indigo"] {
+  --accent: #4A5FD0; --accent-strong: #3346B5; --accent-soft: #DFE4FA; --accent-ink: #0D1238;
+  --chart-1: #4A5FD0;
+}
+html[data-college="indigo"][data-theme="dark"] {
+  --accent: #6B7DE6; --accent-strong: #8A99F0; --accent-soft: #1A1F45; --accent-ink: #0A0E22;
+}
+
+/* ---- teal ---- */
+html[data-college="teal"] {
+  --accent: #0E8C86; --accent-strong: #0A6E69; --accent-soft: #D2F0EE; --accent-ink: #042A28;
+  --chart-1: #0E8C86;
+}
+html[data-college="teal"][data-theme="dark"] {
+  --accent: #24B5AC; --accent-strong: #45CCC3; --accent-soft: #0F3633; --accent-ink: #041715;
+}
+
+/* ---- rose ---- */
+html[data-college="rose"] {
+  --accent: #D0427E; --accent-strong: #B02D66; --accent-soft: #FADDEB; --accent-ink: #3B0A21;
+  --plum: #D0427E; --plum-soft: #FADDEB;
+  --chart-1: #D0427E;
+}
+html[data-college="rose"][data-theme="dark"] {
+  --accent: #E06397; --accent-strong: #E883AE; --accent-soft: #3A1426; --accent-ink: #1A0610;
+}
+
+/* ---- violet ---- */
+html[data-college="violet"] {
+  --accent: #7A4FD0; --accent-strong: #6438B5; --accent-soft: #E9DFFA; --accent-ink: #1E0D38;
+  --plum: #7A4FD0; --plum-soft: #E9DFFA;
+  --chart-1: #7A4FD0;
+}
+html[data-college="violet"][data-theme="dark"] {
+  --accent: #9670E6; --accent-strong: #B08FF0; --accent-soft: #241845; --accent-ink: #100722;
+}
+
+/* ---- slate ---- */
+html[data-college="slate"] {
+  --accent: #4E6573; --accent-strong: #374B57; --accent-soft: #DFE7EB; --accent-ink: #101A20;
+  --chart-1: #4E6573;
+}
+html[data-college="slate"][data-theme="dark"] {
+  --accent: #6E8796; --accent-strong: #8DA4B1; --accent-soft: #1B2A33; --accent-ink: #0A1216;
+}

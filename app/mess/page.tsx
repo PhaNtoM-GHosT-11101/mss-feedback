@@ -125,7 +125,7 @@ export default async function MessPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 md:ml-60">
-      <NavBar userName={profile?.full_name} institutionName={institution.name} />
+      <NavBar userName={profile?.full_name} institutionName={institution.name} tagline={institution.tagline} />
 
       <div className="pt-3">
         <p className="section-label">Mess &amp; menu</p>

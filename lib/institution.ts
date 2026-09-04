@@ -10,6 +10,8 @@ export type Institution = {
   name: string;
   slug: string;
   kind: string | null;
+  theme: string | null;
+  tagline: string | null;
 };
 
 const list = unstable_cache(
@@ -17,7 +19,7 @@ const list = unstable_cache(
     const admin = createAdminClient();
     const { data } = await admin
       .from("institutions")
-      .select("id, name, slug, kind")
+      .select("id, name, slug, kind, theme, tagline")
       .eq("is_active", true)
       .order("name");
     return (data ?? []) as Institution[];
@@ -31,7 +33,7 @@ const bySlug = unstable_cache(
     const admin = createAdminClient();
     const { data } = await admin
       .from("institutions")
-      .select("id, name, slug, kind")
+      .select("id, name, slug, kind, theme, tagline")
       .eq("slug", slug)
       .eq("is_active", true)
       .maybeSingle();
@@ -46,7 +48,7 @@ const byId = unstable_cache(
     const admin = createAdminClient();
     const { data } = await admin
       .from("institutions")
-      .select("id, name, slug, kind")
+      .select("id, name, slug, kind, theme, tagline")
       .eq("id", id)
       .eq("is_active", true)
       .maybeSingle();

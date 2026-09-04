@@ -120,7 +120,7 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 md:ml-60">
-      <NavBar userName={profile?.full_name} institutionName={institution.name} />
+      <NavBar userName={profile?.full_name} institutionName={institution.name} tagline={institution.tagline} />
 
       {/* Greeting */}
       <div className="pt-3">

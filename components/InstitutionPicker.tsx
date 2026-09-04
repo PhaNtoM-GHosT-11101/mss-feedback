@@ -4,6 +4,27 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Institution } from "@/lib/institution";
 
+// Map a college's theme to a tailwind-ish color chip for the picker list.
+const THEME_CHIP: Record<string, string> = {
+  amber: "bg-[#E8A020] text-[#3A2A05]",
+  crimson: "bg-[#D6402A] text-white",
+  emerald: "bg-[#1E8A5A] text-white",
+  indigo: "bg-[#4A5FD0] text-white",
+  teal: "bg-[#0E8C86] text-white",
+  rose: "bg-[#D0427E] text-white",
+  violet: "bg-[#7A4FD0] text-white",
+  slate: "bg-[#4E6573] text-white",
+};
+
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("");
+}
+
 export default function InstitutionPicker({
   institutions,
 }: {
@@ -36,14 +57,15 @@ export default function InstitutionPicker({
     <div className="mx-auto min-h-svh max-w-2xl px-4 pb-16 pt-10">
       <div className="flex flex-col items-center text-center">
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-b from-[#F0AE3C] to-[#E8A020] text-[#241A04]">
-          <span className="font-display text-lg font-bold">M</span>
+          <span className="font-display text-lg font-bold">CF</span>
         </div>
         <h1 className="mt-4 font-display text-2xl font-bold tracking-tight">
           Campus Feedback
         </h1>
         <p className="mt-1.5 max-w-md text-sm text-muted">
-          Pick your institution to file complaints, track them to resolution,
-          and praise what makes your campus better.
+          Pick your institution to open its own feedback board — file
+          complaints, track them to resolution, and praise what makes your
+          campus better.
         </p>
       </div>
 
@@ -77,12 +99,17 @@ export default function InstitutionPicker({
                     <Link
                       key={i.id}
                       href={`/${i.slug}`}
-                      className="card card-hover flex items-center justify-between gap-3 p-3.5"
+                      className="card card-hover flex items-center gap-3 p-3.5"
                     >
+                      <span
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-display text-[11px] font-extrabold ${THEME_CHIP[i.theme ?? "amber"] ?? THEME_CHIP.amber}`}
+                      >
+                        {initials(i.name)}
+                      </span>
                       <span className="truncate text-sm font-medium">
                         {i.name}
                       </span>
-                      <span className="text-xs text-muted">→</span>
+                      <span className="ml-auto text-xs text-muted">→</span>
                     </Link>
                   ))}
               </div>
