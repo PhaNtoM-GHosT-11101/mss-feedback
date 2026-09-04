@@ -64,6 +64,10 @@ const byId = unstable_cache(
  * so a forged header can't leak someone else's scoped data. For users without
  * an institution on their profile yet (e.g. just signed up) we fall back to the
  * slug so onboarding can adopt it.
+ *
+ * Exception: if the user is an admin/committee member of the institution named
+ * by the URL slug, the slug wins. This lets admins open and manage any college
+ * they belong to, and a super-admin to browse every institution.
  */
 export async function getInstitution(): Promise<Institution | null> {
   const h = await headers();
@@ -80,6 +84,20 @@ export async function getInstitution(): Promise<Institution | null> {
       .select("institution_id")
       .eq("id", user.id)
       .maybeSingle();
+
+    // Admins/committee can open the institution named by the slug (lets a
+    // super-admin browse every college). Otherwise profile wins.
+    if (slugInst && profile?.institution_id) {
+      const admin = createAdminClient();
+      const { data: member } = await admin
+        .from("admin_members")
+        .select("user_id")
+        .eq("institution_id", slugInst.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (member) return slugInst;
+    }
+
     if (profile?.institution_id) {
       const profInst = await byId(profile.institution_id);
       if (profInst) return profInst;

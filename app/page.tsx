@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -13,6 +14,7 @@ import {
 } from "@/components/icons";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
 import { getInstitution, listInstitutions } from "@/lib/institution";
+import { INST_HEADER } from "@/proxy";
 import type { Praise } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -52,9 +54,17 @@ const getShared = unstable_cache(
 );
 
 export default async function HomePage() {
-  const institution = await getInstitution();
+  // Home only renders an institution dashboard when the URL carries a slug
+  // (e.g. /nit-agartala). On bare "/" we always show the picker so any user can
+  // browse every college.
+  const h = await headers();
+  const hasSlug = !!h.get(INST_HEADER);
+  if (!hasSlug) {
+    const institutions = await listInstitutions();
+    return <InstitutionPicker institutions={institutions} />;
+  }
 
-  // No institution context -> public landing / institution picker.
+  const institution = await getInstitution();
   if (!institution) {
     const institutions = await listInstitutions();
     return <InstitutionPicker institutions={institutions} />;

@@ -90,12 +90,6 @@ export async function proxy(request: NextRequest) {
   // --- No slug in path --------------------------------------------------------
   // Public/auth flows reachable without an institution.
   if (pathname === "/" || PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    if (pathname === "/" && cookie && session) {
-      // Authed user on the picker with a known institution -> go home.
-      const url = request.nextUrl.clone();
-      url.pathname = "/" + cookie;
-      return NextResponse.redirect(url);
-    }
     return NextResponse.next();
   }
 

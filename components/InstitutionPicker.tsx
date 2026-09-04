@@ -42,8 +42,8 @@ export default function InstitutionPicker({
           Campus Feedback
         </h1>
         <p className="mt-1.5 max-w-md text-sm text-muted">
-          Pick your institution to rate meals, raise issues, and celebrate the
-          mess that makes your day.
+          Pick your institution to file complaints, track them to resolution,
+          and praise what makes your campus better.
         </p>
       </div>
 

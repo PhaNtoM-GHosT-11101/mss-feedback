@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconPlate, IconStar, IconFlame } from "@/components/icons";
+import { IconPlate, IconComplaint, IconPraise } from "@/components/icons";
 
 function BrandPanel() {
   return (
@@ -26,41 +26,41 @@ function BrandPanel() {
 
       <div className="relative">
         <div className="anim-float mb-6 text-6xl" style={{ display: "inline-block" }}>
-          🍛
+          🎯
         </div>
         <h1 className="font-display text-4xl font-bold leading-tight tracking-tight">
-          Every meal,
+          Every voice,
           <br />
-          <span className="text-[#F2B63E]">every voice.</span>
+          <span className="text-[#F2B63E]">every issue resolved.</span>
         </h1>
         <p className="mt-4 max-w-sm text-sm leading-relaxed text-[#9DB39F]">
-          Rate your mess food with a tap, raise issues that get resolved, and
-          celebrate the kitchen that makes your day.
+          File complaints across campus, track them to resolution, and celebrate
+          the teams that make your college better.
         </p>
         <div className="mt-8 flex flex-col gap-3">
           <div className="flex items-center gap-3 text-sm text-[#EDF0E4]">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F2B63E]/15 text-[#F2B63E]">
-              <IconStar className="h-4 w-4" />
+              <IconComplaint className="h-4 w-4" />
             </span>
-            Daily ratings that actually shape the menu
+            Complaints tracked across every department
           </div>
           <div className="flex items-center gap-3 text-sm text-[#EDF0E4]">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#7FA98B]/15 text-[#7FA98B]">
-              <IconFlame className="h-4 w-4" />
+              <IconPraise className="h-4 w-4" />
             </span>
-            Streaks, stats and praise for the staff
+            Praise the teams that make your day
           </div>
           <div className="flex items-center gap-3 text-sm text-[#EDF0E4]">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#B79BC6]/15 text-[#B79BC6]">
-              🛡️
+              📊
             </span>
-            Complaints tracked to resolution
+            Real stats that actually drive change
           </div>
         </div>
       </div>
 
       <p className="relative text-xs text-[#6F8573]">
-        Campus · Mess &amp; Service Society
+        Campus Feedback — your college, your voice
       </p>
     </div>
   );
@@ -107,9 +107,7 @@ function LoginForm() {
             Campus Feedback
           </h1>
           <p className="mt-1.5 text-sm text-muted">
-            Rate · Raise · Praise
-            <br />
-            Campus · Mess &amp; Service Society
+            File · Track · Praise
           </p>
         </div>
 
@@ -118,7 +116,7 @@ function LoginForm() {
             Welcome back 👋
           </h1>
           <p className="mt-1.5 text-sm text-muted">
-            Sign in to rate, raise and praise.
+            File complaints, track resolution, praise the good.
           </p>
         </div>
 

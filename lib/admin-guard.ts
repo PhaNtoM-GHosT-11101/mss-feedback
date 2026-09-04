@@ -19,9 +19,11 @@ export async function getCommittee() {
     .eq("id", user.id)
     .single();
 
+  // Authority is keyed to the resolved (slug) institution, not the profile's
+  // institution, so an admin opening any college they manage sees admin there.
   const [{ data: isAdmin }, { data: isCommittee }] = await Promise.all([
-    supabase.rpc("is_admin"),
-    supabase.rpc("is_committee"),
+    supabase.rpc("is_admin_in", { inst: institution.id }),
+    supabase.rpc("is_committee_in", { inst: institution.id }),
   ]);
 
   if (!isCommittee) redirect("/");
