@@ -32,11 +32,13 @@ function Delta({ v, invert = false }: { v: number | null; invert?: boolean }) {
 }
 
 export default async function AdminDashboard() {
-  const { messIds } = await getCommittee();
+  const { messIds, institution } = await getCommittee();
   const db = createAdminClient();
   const today = todayISO();
   const scope = <T,>(q: T): T => {
-    if (messIds?.length) (q as unknown as { in: (col: string, vals: string[]) => void }).in("mess_id", messIds);
+    const anyQ = q as unknown as { eq: (c: string, v: unknown) => void; in: (c: string, vals: string[]) => void };
+    anyQ.eq("institution_id", institution.id);
+    if (messIds?.length) anyQ.in("mess_id", messIds);
     return q;
   };
 
@@ -65,7 +67,7 @@ export default async function AdminDashboard() {
     scope(db.from("ratings").select("meal_id, stars, id").eq("rating_date", today).limit(5000)),
     scope(db.from("ratings").select("stars, rating_date").gte("rating_date", weekAgoISO).limit(10000)),
     scope(db.from("ratings").select("stars").gte("rating_date", prevWeekISO).lt("rating_date", weekAgoISO).limit(10000)),
-    db.from("profiles").select("id, is_banned", { count: "exact" }),
+    db.from("profiles").select("id, is_banned", { count: "exact" }).eq("institution_id", institution.id),
     scope(db.from("praises").select("id, text, praise_author, is_anonymous, created_at").order("created_at", { ascending: false }).limit(10)),
     scope(db.from("complaints").select("id, title").eq("is_flagged", true).limit(50)),
     scope(db.from("ratings").select("rating_date, meal_id, stars").gte("rating_date", since14ISO.slice(0, 10)).order("rating_date", { ascending: true })),
@@ -87,7 +89,7 @@ export default async function AdminDashboard() {
     cur.count += 1;
     perMeal.set(r.meal_id, cur);
   }
-  const meals = await db.from("meals").select("id, name").eq("is_active", true).order("sort_order");
+  const meals = await db.from("meals").select("id, name").eq("institution_id", institution.id).eq("is_active", true).order("sort_order");
   const mealNames = (meals.data ?? []).map((m) => m.name);
 
   const weekRatingsRows = ratingsWeek.data ?? [];
@@ -174,7 +176,7 @@ export default async function AdminDashboard() {
   for (const c of all) {
     catCounts.set(c.category_id ?? "uncategorised", (catCounts.get(c.category_id ?? "uncategorised") ?? 0) + 1);
   }
-  const cats = await db.from("complaint_categories").select("id, name").eq("is_active", true).order("sort_order");
+  const cats = await db.from("complaint_categories").select("id, name").eq("institution_id", institution.id).eq("is_active", true).order("sort_order");
   const catName = new Map<string, string>();
   for (const c of cats.data ?? []) catName.set(c.id, c.name);
   const palette = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];

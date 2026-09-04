@@ -14,7 +14,7 @@ export default async function AdminReportsPage({
 }: {
   searchParams: Promise<{ from?: string; to?: string; range?: string }>;
 }) {
-  const { messIds } = await getCommittee();
+  const { messIds, institution } = await getCommittee();
   const db = createAdminClient();
   const sp = await searchParams;
   const scope = <T,>(q: T): T => {
@@ -34,11 +34,12 @@ export default async function AdminReportsPage({
   const rangeEnd = to ?? now.toISOString().slice(0, 10);
 
   const [meals, dailyRatings, complaints, praises, profiles] = await Promise.all([
-    db.from("meals").select("*").eq("is_active", true).order("sort_order"),
+    db.from("meals").select("*").eq("institution_id", institution.id).eq("is_active", true).order("sort_order"),
     scope(
       db
         .from("ratings")
         .select("rating_date, meal_id, stars")
+        .eq("institution_id", institution.id)
         .gte("rating_date", rangeStart)
         .lte("rating_date", rangeEnd)
         .order("rating_date", { ascending: true }),
@@ -47,10 +48,23 @@ export default async function AdminReportsPage({
       db
         .from("complaints")
         .select("*, category:complaint_categories!complaint_complaint_category_id_fkey(name), mess:messes(name)")
+        .eq("institution_id", institution.id)
         .limit(5000),
     ),
-    scope(db.from("praises").select("created_at").gte("created_at", rangeStart + "T00:00:00").lte("created_at", rangeEnd + "T23:59:59")),
-    db.from("profiles").select("created_at").gte("created_at", rangeStart + "T00:00:00").lte("created_at", rangeEnd + "T23:59:59"),
+    scope(
+      db
+        .from("praises")
+        .select("created_at")
+        .eq("institution_id", institution.id)
+        .gte("created_at", rangeStart + "T00:00:00")
+        .lte("created_at", rangeEnd + "T23:59:59"),
+    ),
+    db
+      .from("profiles")
+      .select("created_at")
+      .eq("institution_id", institution.id)
+      .gte("created_at", rangeStart + "T00:00:00")
+      .lte("created_at", rangeEnd + "T23:59:59"),
   ]);
 
   const mealIdName = new Map<string, string>();

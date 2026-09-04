@@ -5,20 +5,26 @@ import { CategoriesEditor, MealsEditor, MessesEditor, GeneralEditor, MembersEdit
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
-  const { isAdmin } = await getCommittee();
+  const { isAdmin, institution } = await getCommittee();
   const db = createAdminClient();
 
-  const [categories, meals, messes, settings, members, authUsers] = await Promise.all([
-    db.from("complaint_categories").select("*").order("sort_order"),
-    db.from("meals").select("*").order("sort_order"),
-    db.from("messes").select("*").order("name"),
-    db.from("settings").select("*"),
-    db.from("admin_members").select("*"),
+  const [categories, meals, messes, settings, members, authUsers, instProfiles] = await Promise.all([
+    db.from("complaint_categories").select("*").eq("institution_id", institution.id).order("sort_order"),
+    db.from("meals").select("*").eq("institution_id", institution.id).order("sort_order"),
+    db.from("messes").select("*").eq("institution_id", institution.id).order("name"),
+    db.from("settings").select("*").eq("institution_id", institution.id),
+    db.from("admin_members").select("*").eq("institution_id", institution.id),
     db.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    db.from("profiles").select("id").eq("institution_id", institution.id),
   ]);
 
+  const instUserIds = new Set((instProfiles.data ?? []).map((p) => p.id));
   const emailBy = new Map<string, string>();
-  for (const u of authUsers.data?.users ?? []) emailBy.set(u.id, u.email ?? "");
+  for (const u of authUsers.data?.users ?? []) {
+    if (instUserIds.size === 0 || instUserIds.has(u.id)) {
+      emailBy.set(u.id, u.email ?? "");
+    }
+  }
   const general = settings.data?.find((s) => s.key === "general")?.value as {
     daily_complaint_limit?: number;
     digest_emails?: string[];

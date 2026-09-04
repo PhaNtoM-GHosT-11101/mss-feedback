@@ -15,7 +15,13 @@ const tabs = [
   { href: "/profile", label: "Profile", Icon: IconProfile },
 ];
 
-export function Wordmark({ compact = false }: { compact?: boolean }) {
+export function Wordmark({
+  compact = false,
+  institutionName,
+}: {
+  compact?: boolean;
+  institutionName?: string;
+}) {
   return (
     <span className="flex items-center gap-2.5">
       <span className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-b from-[#F0AE3C] to-[#E8A020] text-[#241A04] shadow-[0_3px_12px_-3px_rgb(232_160_32/0.6)]">
@@ -24,10 +30,10 @@ export function Wordmark({ compact = false }: { compact?: boolean }) {
       {!compact && (
         <span className="flex flex-col leading-none">
           <span className="font-display text-[15px] font-bold tracking-tight text-foreground">
-            MSS Feedback
+            {institutionName ?? "MSS Feedback"}
           </span>
           <span className="mt-0.5 text-[10px] font-medium text-muted">
-            Mess made better
+            {institutionName ? "Mess made better" : "Rate · Raise · Praise"}
           </span>
         </span>
       )}
@@ -35,7 +41,13 @@ export function Wordmark({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export default function NavBar({ userName }: { userName?: string }) {
+export default function NavBar({
+  userName,
+  institutionName,
+}: {
+  userName?: string;
+  institutionName?: string;
+}) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
 
@@ -55,7 +67,7 @@ export default function NavBar({ userName }: { userName?: string }) {
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border bg-surface/70 backdrop-blur-xl md:flex">
         <div className="px-5 pb-6 pt-7">
           <Link href="/" className="inline-block">
-            <Wordmark />
+            <Wordmark institutionName={institutionName} />
           </Link>
         </div>
 
@@ -108,7 +120,7 @@ export default function NavBar({ userName }: { userName?: string }) {
       >
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4">
           <Link href="/" className={scrolled ? "scale-95" : ""} style={{ transition: "transform .3s ease" }}>
-            <Wordmark compact={scrolled} />
+            <Wordmark compact={scrolled} institutionName={institutionName} />
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />

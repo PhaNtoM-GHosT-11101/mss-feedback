@@ -18,12 +18,15 @@ export default async function AdminComplaintsPage({
 }: {
   searchParams: Promise<{ sort?: string }>;
 }) {
-  const { messIds } = await getCommittee();
+  const { messIds, institution } = await getCommittee();
   const db = createAdminClient();
   const sp = await searchParams;
   const sort = sp.sort === "latest" ? "latest" : "upvotes";
 
-  const complaintsQuery = db.from("complaints").select("*, profiles!complaints_user_id_fkey(full_name, roll_no)");
+  const complaintsQuery = db
+    .from("complaints")
+    .select("*, profiles!complaints_user_id_fkey(full_name, roll_no)")
+    .eq("institution_id", institution.id);
   if (messIds?.length) complaintsQuery.in("mess_id", messIds);
   if (sort === "upvotes") complaintsQuery.order("upvote_count", { ascending: false });
   complaintsQuery.order("created_at", { ascending: false });
@@ -33,14 +36,20 @@ export default async function AdminComplaintsPage({
     db
       .from("complaint_upvotes")
       .select("complaint_id, user_id, profiles!complaint_upvotes_user_id_fkey(full_name)")
+      .eq("institution_id", institution.id)
       .limit(500),
     db
       .from("complaint_comments")
       .select("*, profiles!complaint_comments_user_id_fkey(full_name)")
+      .eq("institution_id", institution.id)
       .eq("is_deleted", false)
       .order("created_at")
       .limit(500),
-    db.from("complaint_flags").select("complaint_id, profiles!complaint_flags_user_id_fkey(full_name)").limit(500),
+    db
+      .from("complaint_flags")
+      .select("complaint_id, profiles!complaint_flags_user_id_fkey(full_name)")
+      .eq("institution_id", institution.id)
+      .limit(500),
   ]);
 
   const upvotesBy = new Map<string, { user_id: string; full_name: string | null }[]>();

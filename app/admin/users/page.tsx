@@ -6,21 +6,25 @@ import { setUserBanned, deleteUser, updateUserProfile } from "../actions";
 export const dynamic = "force-dynamic";
 
 export default async function AdminUsersPage() {
-  const { isAdmin } = await getCommittee();
+  const { isAdmin, institution } = await getCommittee();
   const db = createAdminClient();
 
   const [profiles, adminMembers, authUsers] = await Promise.all([
     db
       .from("profiles")
       .select("*")
+      .eq("institution_id", institution.id)
       .order("created_at", { ascending: false })
       .limit(500),
-    db.from("admin_members").select("*"),
+    db.from("admin_members").select("*").eq("institution_id", institution.id),
     db.auth.admin.listUsers({ page: 1, perPage: 1000 }),
   ]);
 
+  const instUserIds = new Set((profiles.data ?? []).map((p) => p.id));
   const emailBy = new Map<string, string>();
-  for (const u of authUsers.data?.users ?? []) emailBy.set(u.id, u.email ?? "");
+  for (const u of authUsers.data?.users ?? []) {
+    if (instUserIds.has(u.id)) emailBy.set(u.id, u.email ?? "");
+  }
 
   const adminRoles = new Map<string, string>();
   for (const a of adminMembers.data ?? []) adminRoles.set(a.user_id, a.role);

@@ -7,6 +7,7 @@ import { HBars } from "@/components/charts/HBars";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireInstitution } from "@/lib/institution";
 import { todayISO } from "@/lib/meal";
 import type { Meal } from "@/lib/types";
 
@@ -28,6 +29,7 @@ function avgOf(list: number[]): number | null {
 
 export default async function StatsPage() {
   const supabase = await createClient();
+  const institution = await requireInstitution();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -43,20 +45,23 @@ export default async function StatsPage() {
 
   const [{ data: mealsRaw }, { data: ratings30 }, { data: complaints }, { data: mealSettings }] =
     await Promise.all([
-      createAdminClient().from("meals").select("id, name, start_hour, end_hour, sort_order, is_active").eq("is_active", true).order("sort_order") as unknown as { data: Meal[] | null },
+      createAdminClient().from("meals").select("id, name, start_hour, end_hour, sort_order, is_active").eq("institution_id", institution.id).eq("is_active", true).order("sort_order") as unknown as { data: Meal[] | null },
       createAdminClient()
         .from("ratings")
         .select("meal_id, stars, rating_date")
+        .eq("institution_id", institution.id)
         .gte("rating_date", lastNDays(30)[0])
         .limit(10000),
       createAdminClient()
         .from("complaints")
         .select("status, created_at, updated_at, mess_id")
+        .eq("institution_id", institution.id)
         .eq("is_flagged", false)
         .limit(5000),
       createAdminClient()
         .from("mess_meal_settings")
         .select("meal_id, is_active")
+        .eq("institution_id", institution.id)
         .eq("mess_id", messId ?? "") as unknown as { data: { meal_id: string; is_active: boolean }[] | null },
     ]);
   const meals = ((mealsRaw ?? []) as Meal[]).filter((m) =>
@@ -146,7 +151,7 @@ export default async function StatsPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 md:ml-60">
-      <NavBar />
+      <NavBar institutionName={institution.name} />
 
       <div className="pt-2">
         <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">

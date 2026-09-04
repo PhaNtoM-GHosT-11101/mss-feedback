@@ -109,24 +109,27 @@ async function main() {
   session = await login();
   if (!session.access_token) throw new Error("Login failed: " + JSON.stringify(session).slice(0, 120));
   const cookie = cookieHeader(session);
+  // Multi-tenant: after signing in, the user has visited/been routed to a
+  // college, so an inst_slug cookie is present for internal navigation.
+  const cookieSlug = cookie + "; inst_slug=nit-agartala";
   const uid = session.user?.id;
   const u = () => ({ auth: session.access_token });
   record("AUTH: test user login + session", true);
 
   // ---- AUTH & NAVIGATION ----
-  let r = await request("/");
-  record("AUTH: anonymous / redirects to login", r.status === 307);
+  let r = await request("/nit-agartala");
+  record("AUTH: anonymous slug -> login w/ next", r.status === 307 && (r.headers.get("location") ?? "").includes("next=%2Fnit-agartala"), `status ${r.status} loc ${r.headers.get("location") ?? ""}`);
   r = await request("/login");
   record("AUTH: /login renders public", r.status === 200);
   for (const p of ["/complaints", "/praise", "/profile", "/complaints/new", "/onboard", "/admin"]) {
-    const rr = await request(p, { cookie });
+    const rr = await request(p, { cookie: cookieSlug });
     const ok = p === "/admin" ? rr.status === 307 : rr.status === 200;
     record(`NAV: GET ${p}`, ok, `status ${rr.status}`);
   }
-  r = await request("/auth/callback?code=bad&next=//evil.example/x", { cookie });
+  r = await request("/auth/callback?code=bad&next=//evil.example/x", { cookie: cookieSlug });
   record("SEC: open-redirect guard (next=//evil)", !r.headers.get("location")?.includes("evil"), r.headers.get("location") ?? "");
-  r = await request("/", { cookie: "sb-gmkzcxvgbhhvznbkxlae-auth-token=garbage" });
-  record("SEC: garbage cookie rejected", r.status === 307);
+  r = await request("/nit-agartala", { cookie: "sb-gmkzcxvgbhhvznbkxlae-auth-token=garbage; inst_slug=nit-agartala" });
+  record("SEC: garbage cookie rejected", r.status === 307, `status ${r.status}`);
 
   // ---- PROFILE ----
   let ms = await supabaseGet(`/rest/v1/messes?select=id,name&is_active=eq.true`, u());
@@ -141,7 +144,7 @@ async function main() {
   record("PROFILE: update roll+mess", upd.status === 204, `status ${upd.status} ${JSON.stringify(upd).slice(0, 160)}`);
   const pf = await supabaseGet(`/rest/v1/profiles?select=roll_no,mess_id&id=eq.${uid}`, u());
   record("PROFILE: values persisted", pf.data?.[0]?.roll_no === "QA123" && pf.data?.[0]?.mess_id === messId);
-  const homeAfter = await request("/", { cookie });
+  const homeAfter = await request("/nit-agartala", { cookie: cookieSlug });
   record("AUTH: logged-in / renders", homeAfter.status === 200, `status ${homeAfter.status}`);
 
   // ---- COMPLAINTS ----
@@ -187,7 +190,7 @@ async function main() {
     const cm = await supabasePost("/rest/v1/complaint_comments", { complaint_id: cid, user_id: uid, body: "QA comment <script>alert(1)</script>" }, u());
     record("COMMENT: insert ok", cm.status === 201);
     if (cm.status === 201) {
-      const page = await request(`/complaints/${cid}`, { cookie });
+      const page = await request(`/complaints/${cid}`, { cookie: cookieSlug });
       record("NAV: complaint detail renders", page.status === 200);
       record("SEC: XSS escaped in HTML", page.body.includes("&lt;script&gt;") || !page.body.includes("<script>alert"), "");
     }
@@ -233,22 +236,24 @@ async function main() {
 
   // ---- ADMIN (grant temp) ----
   const srv = env("SUPABASE_SERVICE_ROLE_KEY");
-  const adminAdded = await supabasePost("/rest/v1/admin_members", { user_id: uid, role: "admin" }, { key: srv });
+  // Multi-tenant: the temp admin row must carry the test user's institution_id.
+  const instId = (await supabaseGet(`/rest/v1/institutions?select=id&slug=eq.nit-agartala&limit=1`, u())).data?.[0]?.id ?? (await supabaseGet(`/rest/v1/institutions?select=id&limit=1`, u())).data?.[0]?.id;
+  const adminAdded = await supabasePost("/rest/v1/admin_members", { user_id: uid, role: "admin", institution_id: instId }, { key: srv });
   const wasAdmin = adminAdded.status === 201;
   if (wasAdmin) {
     for (const p of ["/admin", "/admin/complaints", "/admin/users", "/admin/menu", "/admin/settings", "/admin/reports"]) {
-      const rr = await request(p, { cookie });
+      const rr = await request(p, { cookie: cookieSlug });
       record(`ADMIN: GET ${p}`, rr.status === 200, `status ${rr.status}`);
     }
   }
   await supabasePost(`/rest/v1/admin_members?user_id=eq.${uid}`, {}, { key: srv }, "DELETE");
-  const adminAfter = await request("/admin", { cookie });
+  const adminAfter = await request("/admin", { cookie: cookieSlug });
   record("ADMIN: access revoked after removal", adminAfter.status === 307, `status ${adminAfter.status}`);
 
   // ---- BAN ----
   const banUser = await supabasePost("/rest/v1/profiles?id=eq." + uid, { is_banned: true }, { key: srv });
   if (banUser.status === 204) {
-    const home = await request("/", { cookie });
+    const home = await request("/nit-agartala", { cookie: cookieSlug });
     record("BAN: home shows suspended screen", home.status === 200 && home.body.includes("Account suspended"));
     const block = await supabasePost("/rest/v1/complaints", {
       user_id: uid, mess_id: messId, category_id: cat, title: "QA banned insert", description: "should fail",

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getInstitution } from "@/lib/institution";
 
 export async function getCommittee() {
   const supabase = await createClient();
@@ -9,9 +10,12 @@ export async function getCommittee() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const institution = await getInstitution();
+  if (!institution) redirect("/");
+
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name")
+    .select("id, full_name, institution_id")
     .eq("id", user.id)
     .single();
 
@@ -28,6 +32,7 @@ export async function getCommittee() {
     const { data: rows } = await createAdminClient()
       .from("admin_members")
       .select("mess_id")
+      .eq("institution_id", institution.id)
       .eq("user_id", user.id)
       .not("mess_id", "is", null);
     messIds = (rows ?? []).map((r) => r.mess_id as string);
@@ -36,6 +41,7 @@ export async function getCommittee() {
   return {
     user,
     profile,
+    institution,
     isAdmin: !!isAdmin,
     isCommittee: !!isCommittee,
     messIds,

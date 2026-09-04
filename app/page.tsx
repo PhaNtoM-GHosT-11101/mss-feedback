@@ -5,46 +5,53 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import NavBar from "@/components/NavBar";
 import RateMeal from "@/components/RateMeal";
+import InstitutionPicker from "@/components/InstitutionPicker";
 import { IconPraise, IconComplaint, IconArrowUp, IconTrendingUp } from "@/components/icons";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
 import { todayISO, todayMenuItems, mealColor } from "@/lib/meal";
+import { getInstitution, listInstitutions } from "@/lib/institution";
 import type { Complaint, Meal, Praise } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 const getShared = unstable_cache(
-  async (today: string, dow: number, messId: string) => {
+  async (today: string, dow: number, messId: string, institutionId: string) => {
     const db = createAdminClient();
     const [meals, menuRaw, ratingsToday, announcements, top, praises, mealSettings] =
       await Promise.all([
-        db.from("meals").select("*").eq("is_active", true).order("sort_order"),
+        db.from("meals").select("*").eq("institution_id", institutionId).eq("is_active", true).order("sort_order"),
         db
           .from("menu_items")
           .select("*")
+          .eq("institution_id", institutionId)
           .or(`menu_date.eq.${today},and(is_template.eq.true,weekday.eq.${dow})`)
           .or(`mess_id.eq.${messId},mess_id.is.null`)
           .limit(50),
-        db.from("ratings").select("meal_id, stars").eq("rating_date", today).limit(5000),
+        db.from("ratings").select("meal_id, stars").eq("institution_id", institutionId).eq("rating_date", today).limit(5000),
         db
           .from("announcements")
           .select("*")
+          .eq("institution_id", institutionId)
           .eq("is_active", true)
           .order("created_at", { ascending: false })
           .limit(3),
         db
           .from("complaints")
           .select("id, title, status, upvote_count, created_at, is_pinned, complaint_author, complaint_author_roll")
+          .eq("institution_id", institutionId)
           .order("is_pinned", { ascending: false })
           .order("upvote_count", { ascending: false })
           .limit(3),
         db
           .from("praises")
           .select("id, text, is_anonymous, created_at, praise_author")
+          .eq("institution_id", institutionId)
           .order("created_at", { ascending: false })
           .limit(3),
         db
           .from("mess_meal_settings")
           .select("meal_id, is_active")
+          .eq("institution_id", institutionId)
           .eq("mess_id", messId),
       ]);
     return { meals, menuRaw, ratingsToday, announcements, top, praises, mealSettings };
@@ -54,6 +61,14 @@ const getShared = unstable_cache(
 );
 
 export default async function HomePage() {
+  const institution = await getInstitution();
+
+  // No institution context -> public landing / institution picker.
+  if (!institution) {
+    const institutions = await listInstitutions();
+    return <InstitutionPicker institutions={institutions} />;
+  }
+
   const supabase = await createClient();
 
   const {
@@ -95,7 +110,7 @@ export default async function HomePage() {
   const dow = new Date().getUTCDay();
 
   const { meals, menuRaw, ratingsToday, announcements, top, praises, mealSettings } =
-    await getShared(today, dow, messId);
+    await getShared(today, dow, messId, institution.id);
 
   const activeMealIds = new Set(
     (mealSettings.data ?? [])
@@ -146,7 +161,7 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 md:ml-60">
-      <NavBar userName={profile?.full_name} />
+      <NavBar userName={profile?.full_name} institutionName={institution.name} />
 
       {/* Greeting */}
       <div className="pt-3">

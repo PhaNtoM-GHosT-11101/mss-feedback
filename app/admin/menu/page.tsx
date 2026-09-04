@@ -12,15 +12,15 @@ export default async function AdminMenuPage({
 }: {
   searchParams: Promise<{ mess?: string }>;
 }) {
-  const { messIds } = await getCommittee();
+  const { messIds, institution } = await getCommittee();
   const db = createAdminClient();
   const today = todayISO();
   const sp = await searchParams;
   const scopeMessId = sp.mess ?? "";
 
   const [meals, messes] = await Promise.all([
-    db.from("meals").select("*").eq("is_active", true).order("sort_order"),
-    db.from("messes").select("*").eq("is_active", true).order("name"),
+    db.from("meals").select("*").eq("institution_id", institution.id).eq("is_active", true).order("sort_order"),
+    db.from("messes").select("*").eq("institution_id", institution.id).eq("is_active", true).order("name"),
   ]);
 
   // a mess-scoped committee can only pick their own mess
@@ -31,17 +31,19 @@ export default async function AdminMenuPage({
   const menuQuery = db
     .from("menu_items")
     .select("*")
+    .eq("institution_id", institution.id)
     .or(`menu_date.eq.${today},and(is_template.eq.true,weekday.eq.${new Date().getUTCDay()})`)
     .limit(200);
   const todaysMenu = effectiveMessId
     ? await menuQuery.or(`mess_id.eq.${effectiveMessId},mess_id.is.null`)
     : await menuQuery;
   const settings = effectiveMessId
-    ? await db.from("mess_meal_settings").select("*").eq("mess_id", effectiveMessId)
+    ? await db.from("mess_meal_settings").select("*").eq("institution_id", institution.id).eq("mess_id", effectiveMessId)
     : { data: [] as { meal_id: string; is_active: boolean }[] };
   const announcements = await db
     .from("announcements")
     .select("*")
+    .eq("institution_id", institution.id)
     .order("created_at", { ascending: false })
     .limit(20);
 

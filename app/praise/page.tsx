@@ -3,17 +3,19 @@ import NavBar from "@/components/NavBar";
 import PraiseForm from "./praise-form";
 import { IconPraise } from "@/components/icons";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireInstitution } from "@/lib/institution";
 import { timeAgo } from "@/lib/format";
 import type { Praise } from "@/lib/types";
 
 export const revalidate = 30;
 
 const getPraises = unstable_cache(
-  async () => {
+  async (institutionId: string) => {
     const db = createAdminClient();
     const { data } = await db
       .from("praises")
       .select("id, text, is_anonymous, created_at, praise_author")
+      .eq("institution_id", institutionId)
       .order("created_at", { ascending: false })
       .limit(50);
     return (data ?? []) as unknown as Praise[];
@@ -23,11 +25,12 @@ const getPraises = unstable_cache(
 );
 
 export default async function PraisePage() {
-  const praises = await getPraises();
+  const institution = await requireInstitution();
+  const praises = await getPraises(institution.id);
 
   return (
     <div className="mx-auto max-w-2xl px-4 md:ml-60">
-      <NavBar />
+      <NavBar institutionName={institution.name} />
 
       <h1 className="flex items-center gap-2 pt-2 font-display text-2xl font-bold tracking-tight">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[--sage-soft] text-[--sage]">

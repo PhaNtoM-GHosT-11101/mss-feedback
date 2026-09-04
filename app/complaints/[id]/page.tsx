@@ -6,34 +6,37 @@ import NavBar from "@/components/NavBar";
 import { VoteBar, CommentForm, CloseComplaint, WhatsAppShare } from "./detail-actions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createSessionClient } from "@/lib/supabase/server";
+import { requireInstitution } from "@/lib/institution";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
 import type { Category, Comment, Complaint, Mess } from "@/lib/types";
 
 export const revalidate = 30;
 
 const getData = unstable_cache(
-  async (id: string) => {
+  async (id: string, institutionId: string) => {
     const db = createAdminClient();
     const [c, cm] = await Promise.all([
       db
         .from("complaints")
         .select("*, complaint_author, complaint_author_roll")
         .eq("id", id)
+        .eq("institution_id", institutionId)
         .single(),
       db
         .from("complaint_comments")
         .select("*, comment_author")
         .eq("complaint_id", id)
+        .eq("institution_id", institutionId)
         .eq("is_deleted", false)
         .order("created_at"),
     ]);
     if (!c.data) return null;
     const [cat, mess] = await Promise.all([
       c.data.category_id
-        ? db.from("complaint_categories").select("*").eq("id", c.data.category_id).single()
+        ? db.from("complaint_categories").select("*").eq("id", c.data.category_id).eq("institution_id", institutionId).single()
         : Promise.resolve({ data: null }),
       c.data.mess_id
-        ? db.from("messes").select("*").eq("id", c.data.mess_id).single()
+        ? db.from("messes").select("*").eq("id", c.data.mess_id).eq("institution_id", institutionId).single()
         : Promise.resolve({ data: null }),
     ]);
     return {
@@ -53,7 +56,8 @@ export default async function ComplaintDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const data = await getData(id);
+  const institution = await requireInstitution();
+  const data = await getData(id, institution.id);
   if (!data) notFound();
   const { complaint, comments, category, mess } = data;
   const session = await createSessionClient();
@@ -65,7 +69,7 @@ export default async function ComplaintDetailPage({
 
   return (
     <div className="mx-auto max-w-2xl px-4">
-      <NavBar />
+      <NavBar institutionName={institution.name} />
       <Link
         href="/complaints"
         className="mb-3 flex items-center gap-1 text-xs font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"

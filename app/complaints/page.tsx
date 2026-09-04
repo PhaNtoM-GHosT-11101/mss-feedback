@@ -4,17 +4,19 @@ import NavBar from "@/components/NavBar";
 import FilterBar from "./filters";
 import { IconArrowUp, IconPin, IconPlus, IconComplaint } from "@/components/icons";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireInstitution } from "@/lib/institution";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
 import type { Category, Complaint } from "@/lib/types";
 
 export const revalidate = 30;
 
 const getCats = unstable_cache(
-  async () => {
+  async (institutionId: string) => {
     const db = createAdminClient();
     const { data } = await db
       .from("complaint_categories")
       .select("*")
+      .eq("institution_id", institutionId)
       .eq("is_active", true)
       .order("sort_order");
     return (data ?? []) as Category[];
@@ -24,13 +26,14 @@ const getCats = unstable_cache(
 );
 
 const getComplaints = unstable_cache(
-  async () => {
+  async (institutionId: string) => {
     const db = createAdminClient();
     const { data } = await db
       .from("complaints")
       .select(
         "id, title, status, upvote_count, created_at, is_pinned, is_anonymous, complaint_author, complaint_author_roll, category_id, category:complaint_categories(name), mess_id, mess:messes(name)",
       )
+      .eq("institution_id", institutionId)
       .eq("is_flagged", false)
       .limit(500);
     return (data ?? []) as unknown as Complaint[];
@@ -45,6 +48,7 @@ export default async function ComplaintsPage({
   searchParams: Promise<{ status?: string; category?: string; q?: string; sort?: string }>;
 }) {
   const sp = await searchParams;
+  const institution = await requireInstitution();
   const status = ["new", "in_progress", "resolved"].includes(sp.status ?? "")
     ? sp.status!
     : "all";
@@ -52,7 +56,10 @@ export default async function ComplaintsPage({
   const q = (sp.q ?? "").slice(0, 80);
   const sort = sp.sort === "newest" ? "newest" : "upvotes";
 
-  const [cats, complaints] = await Promise.all([getCats(), getComplaints()]);
+  const [cats, complaints] = await Promise.all([
+    getCats(institution.id),
+    getComplaints(institution.id),
+  ]);
 
   const list = complaints.filter((c) => {
     if (status !== "all" && c.status !== status) return false;
@@ -71,7 +78,7 @@ export default async function ComplaintsPage({
 
   return (
     <div className="mx-auto max-w-2xl px-4 md:ml-60">
-      <NavBar />
+      <NavBar institutionName={institution.name} />
 
       <div className="flex items-center justify-between pt-2">
         <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
