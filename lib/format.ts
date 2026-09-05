@@ -26,7 +26,7 @@ export function statusLabel(status: string): string {
     case "new":
       return "New";
     case "in_progress":
-      return "In progress";
+      return "In review";
     case "resolved":
       return "Resolved";
     default:

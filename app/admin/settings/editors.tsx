@@ -46,6 +46,14 @@ export function CategoriesEditor({ initial }: { initial: Category[] }) {
             />
             active
           </label>
+          <label className="flex items-center gap-1 text-xs text-gray-500">
+            <input
+              type="checkbox"
+              checked={!!c.is_mess}
+              onChange={(e) => set(c.id, { is_mess: e.target.checked })}
+            />
+            mess
+          </label>
           <button
             onClick={async () => { await deleteCategory(c.id); router.refresh(); }}
             className="text-xs text-red-400 hover:text-red-600"
@@ -55,7 +63,7 @@ export function CategoriesEditor({ initial }: { initial: Category[] }) {
         </div>
       ))}
       <button
-        onClick={() => setList([...list, { id: crypto.randomUUID(), name: "", sort_order: list.length, is_active: true }])}
+        onClick={() => setList([...list, { id: crypto.randomUUID(), name: "", sort_order: list.length, is_active: true, is_mess: false }])}
         className="text-xs font-medium text-emerald-600 hover:underline"
       >
         + add category

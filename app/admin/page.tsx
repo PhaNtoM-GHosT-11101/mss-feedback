@@ -211,7 +211,7 @@ export default async function AdminDashboard() {
     resolved: "var(--chart-1)",
   };
   const statusSegments = Object.entries(statusValues).map(([s, n]) => ({
-    label: s === "in_progress" ? "in progress" : s,
+    label: s === "in_progress" ? "in review" : s,
     value: n,
     color: statusColor[s] ?? "var(--chart-5)",
   }));

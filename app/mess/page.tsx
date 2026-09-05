@@ -4,19 +4,30 @@ import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import NavBar from "@/components/NavBar";
-import RateMeal from "@/components/RateMeal";
-import { IconComplaint, IconTrendingUp } from "@/components/icons";
+import { IconArrowUp, IconComplaint, IconPlus, IconPin, IconTrendingUp } from "@/components/icons";
 import { todayISO, todayMenuItems, mealColor } from "@/lib/meal";
 import { requireInstitution } from "@/lib/institution";
+import { statusColor, statusLabel, timeAgo } from "@/lib/format";
 import { AUTH_BYPASS_ENABLED } from "@/lib/testing";
-import type { Meal } from "@/lib/types";
+import type { Category, Meal } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const getShared = unstable_cache(
+type MessComplaint = {
+  id: string;
+  title: string;
+  status: string;
+  upvote_count: number;
+  created_at: string;
+  is_pinned: boolean;
+  meal_session: string | null;
+  category: { name: string } | null;
+};
+
+const getMenu = unstable_cache(
   async (today: string, dow: number, messId: string, institutionId: string) => {
     const db = createAdminClient();
-    const [meals, menuRaw, ratingsToday, mealSettings] = await Promise.all([
+    const [meals, menuRaw, mealSettings] = await Promise.all([
       db
         .from("meals")
         .select("*")
@@ -31,24 +42,49 @@ const getShared = unstable_cache(
         .or(`mess_id.eq.${messId},mess_id.is.null`)
         .limit(50),
       db
-        .from("ratings")
-        .select("meal_id, stars")
-        .eq("institution_id", institutionId)
-        .eq("rating_date", today)
-        .limit(5000),
-      db
         .from("mess_meal_settings")
         .select("meal_id, is_active")
         .eq("institution_id", institutionId)
         .eq("mess_id", messId),
     ]);
-    return { meals, menuRaw, ratingsToday, mealSettings };
+    return { meals, menuRaw, mealSettings };
   },
-  ["mess-dashboard"],
+  ["mess-menu"],
   { revalidate: 60 },
 );
 
-export default async function MessPage() {
+const getMessComplaints = unstable_cache(
+  async (institutionId: string, categoryIds: string[]) => {
+    if (categoryIds.length === 0) return [];
+    const db = createAdminClient();
+    const { data } = await db
+      .from("complaints")
+      .select(
+        "id, title, status, upvote_count, created_at, is_pinned, meal_session, category:complaint_categories(name)",
+      )
+      .eq("institution_id", institutionId)
+      .eq("is_flagged", false)
+      .in("category_id", categoryIds)
+      .limit(300);
+    return (data ?? []) as unknown as MessComplaint[];
+  },
+  ["mess-complaints"],
+  { revalidate: 30, tags: ["complaint"] },
+);
+
+const MEAL_SESSION_LABEL: Record<string, string> = {
+  breakfast: "Breakfast",
+  lunch: "Lunch",
+  dinner: "Dinner",
+  snacks: "Snacks",
+};
+
+export default async function MessPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const sp = await searchParams;
   const institution = await requireInstitution();
 
   const supabase = await createClient();
@@ -58,25 +94,34 @@ export default async function MessPage() {
   } = await supabase.auth.getUser();
   if (!user && !AUTH_BYPASS_ENABLED) redirect("/login");
 
-  const [{ data: profile }, { data: myRatingsRaw }] = await Promise.all([
-    user
-      ? supabase
-          .from("profiles")
-          .select("id, full_name, mess_id, is_banned")
-          .eq("id", user.id)
-          .single()
-      : { data: null },
-    user ? supabase.rpc("my_ratings") : { data: [] },
-  ]);
+  const { data: profile } = user
+    ? await supabase
+        .from("profiles")
+        .select("id, full_name, mess_id, is_banned")
+        .eq("id", user.id)
+        .single()
+    : { data: null };
 
   if (profile?.is_banned) {
     redirect("/");
   }
 
+  // Mess categories for this college.
+  const dbCats = createAdminClient();
+  const { data: cats } = await dbCats
+    .from("complaint_categories")
+    .select("id, name, sort_order")
+    .eq("institution_id", institution.id)
+    .eq("is_active", true)
+    .eq("is_mess", true)
+    .order("sort_order");
+  const messCats = (cats ?? []) as Pick<Category, "id" | "name" | "sort_order">[];
+  const messCatIds = messCats.map((c) => c.id);
+
+  // Which mess to show the menu for.
   let messId = profile?.mess_id ?? null;
   if (messId === null && !AUTH_BYPASS_ENABLED) redirect("/onboard");
   if (messId === null) {
-    // TESTING: anonymous browse -> show the first active mess.
     const { data: messRow } = await createAdminClient()
       .from("messes")
       .select("id")
@@ -88,55 +133,43 @@ export default async function MessPage() {
   }
   if (messId === null) redirect("/");
 
-  const myRatings = (myRatingsRaw ?? []).filter(
-    (r: { rating_date: string }) => r.rating_date === todayISO(),
-  );
+  const [complaints, menuData] = await Promise.all([
+    getMessComplaints(institution.id, messCatIds),
+    getMenu(todayISO(), new Date().getUTCDay(), messId, institution.id),
+  ]);
 
-  const today = todayISO();
-  const dow = new Date().getUTCDay();
+  const status = ["new", "in_progress", "resolved"].includes(sp.status ?? "")
+    ? sp.status!
+    : "all";
 
-  const {
-    meals,
-    menuRaw,
-    ratingsToday,
-    mealSettings,
-  } = await getShared(today, dow, messId, institution.id);
+  const list = complaints
+    .filter((c) => status === "all" || c.status === status)
+    .sort(
+      (a, b) =>
+        Number(b.is_pinned) - Number(a.is_pinned) ||
+        b.upvote_count - a.upvote_count,
+    );
 
+  const open = complaints.filter((c) => c.status === "new" || c.status === "in_progress");
+  const resolvedCount = complaints.filter((c) => c.status === "resolved");
+  const total = complaints.length;
+  const resolveRate =
+    total > 0 ? Math.round((resolvedCount.length / total) * 100) : null;
+
+  const { meals, menuRaw, mealSettings } = menuData;
   const activeMealIds = new Set(
     (mealSettings.data ?? [])
       .filter((s: { is_active: boolean }) => s.is_active)
       .map((s: { meal_id: string }) => s.meal_id),
   );
   const messMeals = (meals.data ?? []).filter((m: Meal) => activeMealIds.has(m.id));
-
-  const perMeal = new Map<string, { sum: number; count: number }>();
-  for (const row of (ratingsToday.data ?? []) as { meal_id: string; stars: number }[]) {
-    const cur = perMeal.get(row.meal_id) ?? { sum: 0, count: 0 };
-    cur.sum += row.stars;
-    cur.count += 1;
-    perMeal.set(row.meal_id, cur);
-  }
-  const averages = new Map<string, { avg: number; count: number }>();
-  for (const [mealId, { sum, count }] of perMeal) {
-    averages.set(mealId, { avg: sum / count, count });
-  }
-
   const menu = todayMenuItems(menuRaw.data ?? []);
   const menuByMeal = new Map<string, typeof menu>();
   for (const item of menu) {
-    const list = menuByMeal.get(item.meal_id) ?? [];
-    list.push(item);
-    menuByMeal.set(item.meal_id, list);
+    const l = menuByMeal.get(item.meal_id) ?? [];
+    l.push(item);
+    menuByMeal.set(item.meal_id, l);
   }
-
-  const allAvg = [...averages.values()];
-  const todayAvg = allAvg.length
-    ? allAvg.reduce((s, a) => s + a.avg, 0) / allAvg.length
-    : null;
-  const ratedTotal = allAvg.reduce((s, a) => s + a.count, 0);
-  const bestMeal = allAvg.length
-    ? [...averages.entries()].sort((a, b) => b[1].avg - a[1].avg)[0]
-    : null;
 
   return (
     <div className="mx-auto max-w-2xl px-4 md:ml-60">
@@ -144,53 +177,99 @@ export default async function MessPage() {
 
       <div className="pt-3">
         <p className="section-label">Mess &amp; menu</p>
-        <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">
-          Rate today&apos;s meals
-        </h1>
+        <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">Mess complaints</h1>
+        <p className="mt-0.5 text-sm text-muted">
+          Report mess problems — the committee reviews and resolves them.
+        </p>
       </div>
 
-      {/* Mini stats strip */}
+      <Link
+        href="/complaints/new?mess=1"
+        className="btn btn-primary mt-4 flex items-center justify-center gap-1.5 py-3"
+      >
+        <IconPlus className="h-4 w-4" /> Report a mess problem
+      </Link>
+
+      {/* Stats strip */}
       <div className="mt-4 grid grid-cols-3 gap-2">
         <div className="card card-hover p-3">
           <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted">
-            <IconTrendingUp className="h-3 w-3" /> Today avg
+            <IconTrendingUp className="h-3 w-3" /> Open
           </p>
+          <p className="mt-1 font-display text-2xl font-bold text-foreground">{open.length}</p>
+        </div>
+        <div className="card card-hover p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Resolved</p>
+          <p className="mt-1 font-display text-2xl font-bold text-foreground">{resolvedCount.length}</p>
+        </div>
+        <div className="card card-hover p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Resolve rate</p>
           <p className="mt-1 font-display text-2xl font-bold text-foreground">
-            {todayAvg !== null ? todayAvg.toFixed(1) : "—"}
-            <span className="text-sm text-muted">/5</span>
-          </p>
-        </div>
-        <div className="card card-hover p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Ratings</p>
-          <p className="mt-1 font-display text-2xl font-bold text-foreground">{ratedTotal}</p>
-        </div>
-        <div className="card card-hover p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Top meal</p>
-          <p className="mt-1 truncate font-display text-xl font-bold text-foreground">
-            {bestMeal ? messMeals.find((m) => m.id === bestMeal[0])?.name ?? "—" : "—"}
+            {resolveRate !== null ? `${resolveRate}%` : "—"}
           </p>
         </div>
       </div>
 
-      <div className="mb-3 mt-6 flex items-baseline justify-between">
-        <h2 className="section-label">Today&apos;s meals</h2>
-        <span className="text-[11px] text-muted">{today}</span>
+      {/* Status tabs */}
+      <div className="mt-5 flex gap-2 overflow-x-auto no-scrollbar pb-1">
+        <Link
+          href="/mess"
+          className={`chip ${status === "all" ? "chip-active" : ""}`}
+          scroll={false}
+        >
+          All
+        </Link>
+        {(["new", "in_progress", "resolved"] as const).map((s) => (
+          <Link
+            key={s}
+            href={`/mess?status=${s}`}
+            className={`chip ${status === s ? "chip-active" : ""}`}
+            scroll={false}
+          >
+            {statusLabel(s)}
+          </Link>
+        ))}
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {messMeals.map((meal: Meal) => {
-          const my = myRatings.find((r: { meal_id: string }) => r.meal_id === meal.id);
-          const avg = averages.get(meal.id);
-          return (
-            <RateMeal
-              key={meal.id}
-              meal={meal}
-              messId={messId}
-              ratedToday={my?.stars ?? null}
-              avg={avg?.avg ?? null}
-              count={avg?.count ?? 0}
-            />
-          );
-        })}
+
+      {/* Complaint list */}
+      <div className="stagger mt-3 grid gap-2 sm:grid-cols-2">
+        {list.length === 0 && (
+          <p className="card border-dashed p-8 text-center text-sm text-muted sm:col-span-2">
+            No {status === "all" ? "mess complaints" : `${statusLabel(status)} mess complaints`} yet.
+          </p>
+        )}
+        {list.map((c) => (
+          <Link
+            key={c.id}
+            href={`/complaints/${c.id}`}
+            className="card card-hover group flex items-start gap-3 p-3.5"
+          >
+            <div className="flex shrink-0 flex-col items-center rounded-lg bg-[--surface-2] px-2.5 py-1.5">
+              <span className="text-sm font-bold leading-tight">{c.upvote_count}</span>
+              <IconArrowUp className="h-3 w-3 text-muted" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                {c.is_pinned && <IconPin className="h-3.5 w-3.5 shrink-0 text-[--accent]" />}
+                <p className="truncate text-sm font-medium">{c.title}</p>
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
+                <span className={statusColor(c.status)}>{statusLabel(c.status)}</span>
+                {c.category?.name && (
+                  <span className="rounded-md bg-[--accent-soft] px-1.5 py-0.5 font-medium text-[--accent-ink]">
+                    {c.category.name}
+                  </span>
+                )}
+                {c.meal_session && MEAL_SESSION_LABEL[c.meal_session] && (
+                  <span className="rounded-md bg-[--surface-2] px-1.5 py-0.5">
+                    {MEAL_SESSION_LABEL[c.meal_session]}
+                  </span>
+                )}
+                <span>{timeAgo(c.created_at)}</span>
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
 
       <h2 className="section-label mb-3 mt-8">Today&apos;s menu</h2>
@@ -217,8 +296,11 @@ export default async function MessPage() {
       </div>
 
       <div className="mt-6 flex gap-3">
-        <Link href="/complaints/new" className="btn btn-primary flex flex-1 items-center justify-center gap-1.5">
-          <IconComplaint className="h-4 w-4" /> Complain about mess
+        <Link
+          href="/complaints"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-2.5 text-sm font-medium text-muted hover:text-foreground"
+        >
+          <IconComplaint className="h-4 w-4" /> All issues board
         </Link>
       </div>
     </div>

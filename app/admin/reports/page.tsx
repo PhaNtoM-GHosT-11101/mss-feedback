@@ -112,7 +112,7 @@ export default async function AdminReportsPage({
     resolved: "var(--chart-1)",
   };
   const statusSegments = Object.entries(statusCounts).map(([s, n]) => ({
-    label: s === "in_progress" ? "in progress" : s,
+    label: s === "in_progress" ? "in review" : s,
     value: n,
     color: statusColor[s] ?? "var(--chart-5)",
   }));

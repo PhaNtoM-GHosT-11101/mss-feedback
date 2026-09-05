@@ -130,7 +130,7 @@ export default async function HomePage() {
           {greeting}, {profile?.full_name?.split(" ")[0] ?? "there"} 👋
         </h1>
         <p className="mt-0.5 text-sm text-muted">
-          Complaints, praise and daily mess ratings for {institution.name}.
+          Complaints, praise and mess issues for {institution.name}.
         </p>
       </div>
 

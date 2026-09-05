@@ -10,6 +10,7 @@ export type Category = {
   name: string;
   is_active: boolean;
   sort_order: number;
+  is_mess: boolean | null;
 };
 
 export type Meal = {
