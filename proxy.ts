@@ -1,4 +1,3 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Passed to Server Components / Server Actions so they know the institution context.
@@ -6,17 +5,18 @@ import { NextResponse, type NextRequest } from "next/server";
 export const INST_HEADER = "x-institution-slug";
 export const INST_COOKIE = "inst_slug";
 
+// Reserved top-level paths (never treated as college slugs).
 const RESERVED = new Set([
   "login",
-  "onboard",
   "complaints",
-  "mess",
   "admin",
-  "stats",
-  "praise",
   "profile",
   "auth",
   "playground",
+  "mess",
+  "praise",
+  "stats",
+  "onboard",
   "favicon.ico",
   "_next",
   "icon",
@@ -25,6 +25,9 @@ const RESERVED = new Set([
   "robots.txt",
   "sitemap.xml",
 ]);
+
+// Feature routes removed from the app — send visitors home instead of 404.
+const LEGACY = new Set(["mess", "praise", "stats", "onboard"]);
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const PUBLIC_PATHS = ["/login", "/auth/callback", "/auth/token", "/playground"];
@@ -43,38 +46,16 @@ export async function proxy(request: NextRequest) {
   const slug = isSlug ? first : null;
   const stripped = slug ? "/" + segments.slice(1).join("/") : pathname;
 
-  // Local-only session check (reads + decodes chunked cookies, no network).
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll() {
-          // read-only
-        },
-      },
-    },
-  );
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
   const cookie = request.cookies.get(INST_COOKIE)?.value;
 
-  // --- TESTING BYPASS --------------------------------------------------------
-  // When NEXT_PUBLIC_AUTH_BYPASS=1 we skip the login wall so the app can be
-  // browsed without a Google account. Routing/login redirects are relaxed and
-  // the institution context is always injected for slug paths.
-  const BYPASS = process.env.NEXT_PUBLIC_AUTH_BYPASS === "1";
-
-  // --- Path carries an institution slug --------------------------------------
+  // --- Path carries an institution slug: reading is open to everyone. --------
   if (slug) {
-    if (!session && !BYPASS) {
+    // Removed feature pages (e.g. /nit-agartala/mess) bounce to the board.
+    const strippedFirst = stripped.split("/").filter(Boolean)[0] ?? "";
+    if (LEGACY.has(strippedFirst)) {
       const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("next", pathname);
+      url.pathname = `/${slug}`;
+      url.search = "";
       return NextResponse.redirect(url);
     }
     const url = request.nextUrl.clone();
@@ -92,39 +73,36 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  // --- No slug in path --------------------------------------------------------
-  // Public/auth flows reachable without an institution.
-  if (pathname === "/" || PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
-  }
-
-  // Authed with a cookie -> inject the institution context (internal navigation).
-  if (cookie && session) {
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set(INST_HEADER, cookie);
-    return NextResponse.next({ request: { headers: requestHeaders } });
-  }
-
-  // Authed but no institution known -> picker, remember where they were heading.
-  if (session) {
+  // --- Removed top-level feature pages -> home. ------------------------------
+  if (LEGACY.has(first) && pathname !== "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/";
-    url.searchParams.set("next", pathname);
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
-  // TESTING: allow unauthenticated internal navigation through.
-  if (BYPASS && cookie) {
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set(INST_HEADER, cookie);
-    return NextResponse.next({ request: { headers: requestHeaders } });
+  // --- No slug in path --------------------------------------------------------
+  const inject = (nextResponse: NextResponse) => {
+    if (cookie) {
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set(INST_HEADER, cookie);
+      return NextResponse.next({ request: { headers: requestHeaders } });
+    }
+    return nextResponse;
+  };
+
+  // Home doubles as the board: return the visitor to the college they last used.
+  if (pathname === "/") {
+    return inject(NextResponse.next());
   }
 
-  // Not authed -> login (no institution to fall back to, so land on login).
-  const url = request.nextUrl.clone();
-  url.pathname = "/login";
-  url.searchParams.set("next", pathname);
-  return NextResponse.redirect(url);
+  // Public/auth flows reachable without an institution.
+  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  // Everywhere else still works without a login — just without a college header.
+  return inject(NextResponse.next());
 }
 
 export const config = {

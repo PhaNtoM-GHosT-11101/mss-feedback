@@ -3,12 +3,12 @@ import { unstable_cache } from "next/cache";
 import { ChevronLeft, Pin } from "lucide-react";
 import Link from "next/link";
 import NavBar from "@/components/NavBar";
-import { VoteBar, CommentForm, CloseComplaint, WhatsAppShare } from "./detail-actions";
+import { VoteBar, CommentForm, WhatsAppShare } from "./detail-actions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createSessionClient } from "@/lib/supabase/server";
 import { requireInstitution } from "@/lib/institution";
-import { statusColor, statusLabel, timeAgo } from "@/lib/format";
-import type { Category, Comment, Complaint, Mess } from "@/lib/types";
+import { timeAgo } from "@/lib/format";
+import type { Category, Comment, Complaint } from "@/lib/types";
 
 export const revalidate = 30;
 
@@ -21,6 +21,7 @@ const getData = unstable_cache(
         .select("*, complaint_author, complaint_author_roll")
         .eq("id", id)
         .eq("institution_id", institutionId)
+        .eq("is_flagged", false)
         .single(),
       db
         .from("complaint_comments")
@@ -31,19 +32,20 @@ const getData = unstable_cache(
         .order("created_at"),
     ]);
     if (!c.data) return null;
-    const [cat, mess] = await Promise.all([
-      c.data.category_id
-        ? db.from("complaint_categories").select("*").eq("id", c.data.category_id).eq("institution_id", institutionId).single()
-        : Promise.resolve({ data: null }),
-      c.data.mess_id
-        ? db.from("messes").select("*").eq("id", c.data.mess_id).eq("institution_id", institutionId).single()
-        : Promise.resolve({ data: null }),
-    ]);
+    const catData = c.data.category_id
+      ? (
+          await db
+            .from("complaint_categories")
+            .select("*")
+            .eq("id", c.data.category_id)
+            .eq("institution_id", institutionId)
+            .single()
+        ).data
+      : null;
     return {
       complaint: c.data as unknown as Complaint,
       comments: (cm.data ?? []) as unknown as Comment[],
-      category: (cat.data ?? null) as unknown as Category | null,
-      mess: (mess.data ?? null) as unknown as Mess | null,
+      category: (catData ?? null) as unknown as Category | null,
     };
   },
   ["complaint"],
@@ -59,38 +61,32 @@ export default async function ComplaintDetailPage({
   const institution = await requireInstitution();
   const data = await getData(id, institution.id);
   if (!data) notFound();
-  const { complaint, comments, category, mess } = data;
+  const { complaint, comments, category } = data;
   const session = await createSessionClient();
   const {
     data: { user },
   } = await session.auth.getUser();
   const isOwner = !!user && complaint.user_id === user.id;
-  const isResolved = complaint.status === "resolved";
 
   return (
     <div className="mx-auto max-w-2xl px-4">
       <NavBar institutionName={institution.name} tagline={institution.tagline} />
       <Link
-        href="/complaints"
+        href="/"
         className="mb-3 flex items-center gap-1 text-xs font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
       >
-        <ChevronLeft className="h-4 w-4" /> All complaints
+        <ChevronLeft className="h-4 w-4" /> Back to board
       </Link>
 
       <div className="card p-4">
         <div className="flex flex-wrap items-center gap-1.5">
-          {complaint.is_pinned && <Pin className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />}
-          <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusColor(complaint.status)}`}>
-            {statusLabel(complaint.status)}
-          </span>
+          {complaint.is_pinned && (
+            <Pin className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+          )}
           {category && (
             <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+              {category.is_mess ? "🍽 " : ""}
               {category.name}
-            </span>
-          )}
-          {mess && (
-            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-              {mess.name}
             </span>
           )}
         </div>
@@ -124,16 +120,9 @@ export default async function ComplaintDetailPage({
           <span>{timeAgo(complaint.created_at)}</span>
         </div>
 
-        {complaint.status === "resolved" && complaint.resolution_note && (
-          <div className="mt-3 rounded-xl border border-emerald-200/70 bg-emerald-50/70 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
-            <span className="font-semibold">Resolved:</span> {complaint.resolution_note}
-          </div>
-        )}
+        <VoteBar isOwner={isOwner} complaintId={id} upvotes={complaint.upvote_count} />
 
-        <VoteBar complaintId={id} upvotes={complaint.upvote_count} />
-
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {isOwner && !isResolved && <CloseComplaint complaintId={id} title={complaint.title} />}
+        <div className="mt-3">
           <WhatsAppShare title={complaint.title} />
         </div>
 

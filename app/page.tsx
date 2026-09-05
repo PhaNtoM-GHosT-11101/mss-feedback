@@ -1,269 +1,204 @@
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import NavBar from "@/components/NavBar";
 import InstitutionPicker from "@/components/InstitutionPicker";
-import {
-  IconPraise,
-  IconComplaint,
-  IconArrowUp,
-  IconPlate,
-} from "@/components/icons";
-import { statusColor, statusLabel, timeAgo } from "@/lib/format";
-import { AUTH_BYPASS_ENABLED } from "@/lib/testing";
-import { getInstitution, listInstitutions } from "@/lib/institution";
+import { IconArrowUp, IconPlus, IconPin } from "@/components/icons";
+import { timeAgo } from "@/lib/format";
+import { headers } from "next/headers";
 import { INST_HEADER } from "@/proxy";
-import type { Praise } from "@/lib/types";
+import { getInstitutionBySlug, listInstitutions } from "@/lib/institution";
+import type { Category } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
-const getShared = unstable_cache(
+type BoardComplaint = {
+  id: string;
+  title: string;
+  description: string;
+  upvote_count: number;
+  created_at: string;
+  is_pinned: boolean;
+  is_anonymous: boolean;
+  complaint_author: string | null;
+  meal_session: string | null;
+  category_id: string | null;
+  category: { name: string } | null;
+  photo_urls: string[] | null;
+};
+
+const MEAL_SESSION_LABEL: Record<string, string> = {
+  breakfast: "Breakfast",
+  lunch: "Lunch",
+  dinner: "Dinner",
+  snacks: "Snacks",
+};
+
+const getBoard = unstable_cache(
   async (institutionId: string) => {
     const db = createAdminClient();
-    const [announcements, top, praises] = await Promise.all([
+    const [cats, complaints] = await Promise.all([
       db
-        .from("announcements")
+        .from("complaint_categories")
         .select("*")
         .eq("institution_id", institutionId)
         .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(3),
+        .order("sort_order"),
       db
         .from("complaints")
         .select(
-          "id, title, status, upvote_count, created_at, is_pinned, complaint_author, complaint_author_roll, category:complaint_categories(name)",
+          "id, title, description, status, upvote_count, created_at, is_pinned, is_anonymous, complaint_author, meal_session, category_id, category:complaint_categories(name), photo_urls",
         )
         .eq("institution_id", institutionId)
         .eq("is_flagged", false)
-        .order("is_pinned", { ascending: false })
-        .order("upvote_count", { ascending: false })
-        .limit(5),
-      db
-        .from("praises")
-        .select("id, text, is_anonymous, created_at, praise_author")
-        .eq("institution_id", institutionId)
-        .order("created_at", { ascending: false })
-        .limit(4),
+        .limit(500),
     ]);
-    return { announcements, top, praises };
+    return {
+      categories: ((cats?.data ?? []) as Category[]),
+      complaints: (complaints?.data ?? []) as unknown as BoardComplaint[],
+    };
   },
-  ["home-hub"],
-  { revalidate: 60 },
+  ["home-board"],
+  { revalidate: 30, tags: ["complaint"] },
 );
 
-export default async function HomePage() {
-  // Home only renders an institution dashboard when the URL carries a slug
-  // (e.g. /nit-agartala). On bare "/" we always show the picker so any user can
-  // browse every college.
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; sort?: string }>;
+}) {
+  const sp = await searchParams;
   const h = await headers();
   const hasSlug = !!h.get(INST_HEADER);
   if (!hasSlug) {
     const institutions = await listInstitutions();
     return <InstitutionPicker institutions={institutions} />;
   }
-
-  const institution = await getInstitution();
+  const institution = hasSlug ? await getInstitutionBySlug(h.get(INST_HEADER)!) : null;
   if (!institution) {
     const institutions = await listInstitutions();
     return <InstitutionPicker institutions={institutions} />;
   }
 
-  const supabase = await createClient();
+  const { categories, complaints } = await getBoard(institution.id);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user && !AUTH_BYPASS_ENABLED) redirect("/login");
+  const sort = sp.sort === "newest" ? "newest" : "upvotes";
+  const category = sp.category ?? "all";
 
-  const { data: profile } = user
-    ? await supabase
-        .from("profiles")
-        .select("id, full_name, roll_no, is_banned")
-        .eq("id", user.id)
-        .single()
-    : { data: null };
-
-  if (profile?.is_banned) {
-    return (
-      <div className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-8 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-2xl font-bold text-red-500 dark:bg-red-950/50">
-          !
-        </div>
-        <h1 className="mt-4 text-lg font-semibold tracking-tight">Account suspended</h1>
-        <p className="mt-2 text-sm text-zinc-400">
-          Your account has been suspended by the campus committee for violating the
-          code of conduct. If you believe this is a mistake, contact the committee.
-        </p>
-      </div>
-    );
-  }
-
-  const { announcements, top, praises } = await getShared(institution.id);
-
-  const now = new Date();
-  const hour = now.getHours();
-  const greeting =
-    hour < 5
-      ? "Burning the midnight oil"
-      : hour < 12
-        ? "Good morning"
-        : hour < 17
-          ? "Good afternoon"
-          : "Good evening";
-  const fullDate = now.toLocaleDateString("en-IN", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
+  const list = complaints
+    .filter((c) => category === "all" || c.category_id === category)
+    .sort((a, b) => {
+      if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+      if (sort === "newest") return b.created_at.localeCompare(a.created_at);
+      return b.upvote_count - a.upvote_count;
+    });
 
   return (
     <div className="mx-auto max-w-2xl px-4 md:ml-60">
-      <NavBar userName={profile?.full_name} institutionName={institution.name} tagline={institution.tagline} />
+      <NavBar institutionName={institution.name} tagline={institution.tagline} />
 
-      {/* Greeting */}
-      <div className="pt-3">
-        <p className="section-label">{fullDate}</p>
-        <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">
-          {greeting}, {profile?.full_name?.split(" ")[0] ?? "there"} 👋
-        </h1>
-        <p className="mt-0.5 text-sm text-muted">
-          Complaints, praise and mess issues for {institution.name}.
-        </p>
-      </div>
-
-      {/* Quick actions */}
-      <div className="grid grid-cols-3 gap-2.5 mt-5">
-        <Link
-          href="/complaints/new"
-          className="card card-hover tap flex flex-col items-center gap-2 p-3 text-center"
-        >
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft">
-            <IconComplaint className="h-5 w-5 text-accent-strong" />
-          </span>
-          <span className="text-sm font-semibold">File complaint</span>
-        </Link>
-        <Link
-          href="/praise"
-          className="card card-hover tap flex flex-col items-center gap-2 p-3 text-center"
-        >
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[--surface-2]">
-            <IconPraise className="h-5 w-5 text-muted" />
-          </span>
-          <span className="text-sm font-semibold">Give praise</span>
-        </Link>
-        <Link
-          href="/mess"
-          className="card card-hover tap flex flex-col items-center gap-2 p-3 text-center"
-        >
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[--surface-2]">
-            <IconPlate className="h-5 w-5 text-muted" />
-          </span>
-          <span className="text-sm font-semibold">Mess &amp; menu</span>
-        </Link>
-      </div>
-
-      {announcements.data && announcements.data.length > 0 && (
-        <div className="mt-5 space-y-2">
-          {announcements.data.map((a) => (
-            <div
-              key={a.id}
-              className="card flex items-start gap-3 border-[--accent]/30 bg-[--accent-soft]/60 p-3.5"
-            >
-              <span className="text-lg leading-none">📢</span>
-              <div>
-                <p className="text-sm font-semibold text-foreground">{a.title}</p>
-                {a.body && <p className="mt-0.5 text-sm text-muted">{a.body}</p>}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-7 flex items-baseline justify-between">
-        <h2 className="section-label">Top issues</h2>
-        <Link
-          href="/complaints"
-          className="text-[11px] font-medium text-muted hover:text-foreground"
-        >
-          View all
-        </Link>
-      </div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        {(() => {
-          const list = (top.data ?? []) as {
-            id: string;
-            title: string;
-            status: string;
-            upvote_count: number;
-            created_at: string;
-            complaint_author: string | null;
-            category: { name: string }[] | null;
-          }[];
-          if (list.length === 0) {
-            return (
-              <p className="card border-dashed p-5 text-center text-sm text-muted sm:col-span-2">
-                No complaints yet — be the first voice.
-              </p>
-            );
-          }
-          return list.map((c) => (
-            <Link
-              key={c.id}
-              href={`/complaints/${c.id}`}
-              className="card card-hover group flex items-start gap-3 p-3.5"
-            >
-              <div className="flex flex-col items-center rounded-lg bg-[--surface-2] px-2 py-1">
-                <span className="text-sm font-bold">{c.upvote_count}</span>
-                <IconArrowUp className="h-3 w-3 text-muted" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{c.title}</p>
-                <div className="mt-1 flex items-center gap-2 text-xs text-muted">
-                  <span className={statusColor(c.status)}>{statusLabel(c.status)}</span>
-                  {c.category && c.category.length > 0 && (
-                    <span className="rounded bg-[--surface-2] px-1.5 py-0.5 text-[10px] font-medium">
-                      {c.category[0].name}
-                    </span>
-                  )}
-                  {c.complaint_author && (
-                    <span className="truncate">{c.complaint_author}</span>
-                  )}
-                  <span>{timeAgo(c.created_at)}</span>
-                </div>
-              </div>
-            </Link>
-          ));
-        })()}
-      </div>
-
-      <div className="mt-8 flex items-baseline justify-between">
-        <h2 className="section-label">Recent praise</h2>
-        <Link
-          href="/praise"
-          className="text-[11px] font-medium text-muted hover:text-foreground"
-        >
-          View all
-        </Link>
-      </div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        {(praises.data ?? []).length === 0 && (
-          <p className="card border-dashed p-5 text-center text-sm text-muted sm:col-span-2">
-            No praise yet — your campus staff would love one.
+      <div className="flex items-end justify-between pt-3">
+        <div>
+          <p className="section-label">Suggestion box</p>
+          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">
+            Community board
+          </h1>
+          <p className="mt-0.5 text-sm text-muted">
+            Complaints about {institution.name} — the most upvoted float up.
           </p>
-        )}
-        {((praises.data ?? []) as Praise[]).map((p) => (
-          <div key={p.id} className="card p-3.5 text-sm">
-            <p>{p.text}</p>
-            <p className="mt-1 text-xs text-muted">
-              {p.is_anonymous || !p.praise_author ? "Anonymous" : p.praise_author} ·{" "}
-              {timeAgo(p.created_at)}
-            </p>
-          </div>
+        </div>
+      </div>
+
+      <Link
+        href="/complaints/new"
+        className="btn btn-primary mt-4 flex items-center justify-center gap-1.5 py-3"
+      >
+        <IconPlus className="h-4 w-4" /> File a complaint
+      </Link>
+
+      {/* Filters */}
+      <div className="mt-5 flex gap-2 overflow-x-auto no-scrollbar pb-1">
+        <Link
+          href="/"
+          scroll={false}
+          className={`chip ${category === "all" ? "chip-active" : ""}`}
+        >
+          All
+        </Link>
+        {categories.map((c) => (
+          <Link
+            key={c.id}
+            href={`/?category=${c.id}`}
+            scroll={false}
+            className={`chip ${category === c.id ? "chip-active" : ""}`}
+          >
+            {c.is_mess ? "🍽 " : ""}
+            {c.name}
+          </Link>
         ))}
       </div>
+
+      <div className="mt-3 flex items-center justify-end gap-3 text-xs text-muted">
+        <Link
+          href="/"
+          scroll={false}
+          className={sort === "upvotes" ? "font-semibold text-[--accent-strong]" : "hover:text-foreground"}
+        >
+          Most upvoted
+        </Link>
+        <Link
+          href="/?sort=newest"
+          scroll={false}
+          className={sort === "newest" ? "font-semibold text-[--accent-strong]" : "hover:text-foreground"}
+        >
+          Newest
+        </Link>
+      </div>
+
+      {/* Board */}
+      <div className="stagger mt-3 grid gap-2 sm:grid-cols-1">
+        {list.length === 0 && (
+          <p className="card border-dashed p-8 text-center text-sm text-muted">
+            No complaints yet. Be the first to file one.
+          </p>
+        )}
+        {list.map((c) => (
+          <Link
+            key={c.id}
+            href={`/complaints/${c.id}`}
+            className="card card-hover group flex items-start gap-3 p-3.5"
+          >
+            <div className="flex shrink-0 flex-col items-center rounded-lg bg-[--surface-2] px-2.5 py-1.5">
+              <span className="text-sm font-bold leading-tight">{c.upvote_count}</span>
+              <IconArrowUp className="h-3 w-3 text-muted" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                {c.is_pinned && <IconPin className="h-3.5 w-3.5 shrink-0 text-[--accent]" />}
+                <p className="text-sm font-medium leading-snug text-foreground">{c.title}</p>
+              </div>
+              {c.description && (
+                <p className="mt-1 line-clamp-2 text-xs text-muted">{c.description}</p>
+              )}
+              <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted">
+                {c.category?.name && (
+                  <span className="rounded-md bg-[--accent-soft] px-1.5 py-0.5 font-medium text-[--accent-ink]">
+                    {c.category.name}
+                  </span>
+                )}
+                {c.meal_session && MEAL_SESSION_LABEL[c.meal_session] && (
+                  <span className="rounded-md bg-[--surface-2] px-1.5 py-0.5">
+                    {MEAL_SESSION_LABEL[c.meal_session]}
+                  </span>
+                )}
+                <span>{timeAgo(c.created_at)}</span>
+                {c.photo_urls && c.photo_urls.length > 0 && <span>📷</span>}
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+      <div className="h-6" />
     </div>
   );
 }

@@ -63,9 +63,8 @@ export default function InstitutionPicker({
           Campus Feedback
         </h1>
         <p className="mt-1.5 max-w-md text-sm text-muted">
-          Pick your institution to open its own feedback board — file
-          complaints, track them to resolution, and praise what makes your
-          campus better.
+          Pick your institution to open its public suggestion box — file a
+          complaint, upvote what matters, and make your campus heard.
         </p>
       </div>
 

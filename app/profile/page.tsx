@@ -1,22 +1,17 @@
-import { redirect } from "next/navigation";
 import NavBar from "@/components/NavBar";
 import ProfileEditor from "./profile-editor";
-import { IconArrowUp, IconMapPin } from "@/components/icons";
+import { IconArrowUp } from "@/components/icons";
 import { createClient } from "@/lib/supabase/server";
-import { statusColor, statusLabel, timeAgo } from "@/lib/format";
-import { AUTH_BYPASS_ENABLED } from "@/lib/testing";
-import type { Mess, Profile } from "@/lib/types";
+import { timeAgo } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 type MyComplaint = {
   id: string;
   title: string;
-  status: string;
   upvote_count: number;
   created_at: string;
 };
-type MyRating = { id: string; meal_id: string; stars: number; comment: string | null; rating_date: string };
 
 const AVATAR_EMOJIS = ["🧑‍🍳", "🦁", "🐼", "🦊", "🐯", "🦉", "🐸", "🐙", "🦄", "🥑", "🍉", "🌶️", "🥞", "🍩", "☕", "🎧", "⚽", "🎨", "🚀", "🧊"];
 
@@ -31,58 +26,45 @@ export default async function ProfilePage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user && !AUTH_BYPASS_ENABLED) redirect("/login");
 
   if (!user) {
     return (
       <div className="mx-auto max-w-2xl px-4 md:ml-60">
         <NavBar />
         <div className="card mt-8 p-8 text-center">
-          <div className="text-[40px]">👤</div>
+          <div className="text-[40px]">📣</div>
           <h1 className="mt-2 font-display text-xl font-bold tracking-tight">
-            No account in use
+            You&apos;re browsing anonymously
           </h1>
           <p className="mt-2 text-sm text-muted">
-            Auth is bypassed for testing, so there&apos;s no profile to show here.
-            Sign in normally to see your own complaints, ratings and settings.
+            Every college board is open for everyone to read. Sign in with
+            Google only if you want to post complaints, vote and comment under
+            your name.
           </p>
+          <a
+            href="/login"
+            className="btn btn-primary mt-4 inline-flex items-center justify-center py-3"
+          >
+            Sign in with Google
+          </a>
         </div>
       </div>
     );
   }
 
-  const [prof, ms, c, r, p] = await Promise.all([
+  const [prof, c] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, roll_no, mess_id, mess:messes(name)")
+      .select("id, full_name, roll_no")
       .eq("id", user.id)
       .single(),
     supabase
-      .from("messes")
-      .select("*")
-      .eq("is_active", true)
-      .order("name"),
-    supabase
       .rpc("my_complaints")
       .then((x) => ((x as unknown as { data: MyComplaint[] | null }).data ?? []) as MyComplaint[]),
-    supabase
-      .rpc("my_ratings")
-      .then((x) => ((x as unknown as { data: MyRating[] | null }).data ?? []) as MyRating[]),
-    supabase
-      .rpc("my_praises")
-      .then((x) => ((x as unknown as { data: { id: string }[] | null }).data ?? []) as { id: string }[]),
   ]);
 
-  const profile = (prof.data ?? null) as unknown as (Profile & { mess: { name: string } | null }) | null;
-  const messes = (ms.data ?? []) as Mess[];
+  const profile = (prof.data ?? null) as unknown as { id: string; full_name: string; roll_no: string | null } | null;
   const myComplaints = c;
-  const myRatings = [...r].reverse();
-  const myPraisesCount = p.length;
-
-  const myAvg = myRatings.length
-    ? (myRatings.reduce((s, x) => s + x.stars, 0) / myRatings.length).toFixed(1)
-    : null;
-  const resolvedCount = myComplaints.filter((c) => c.status === "resolved").length;
   const firstNames = profile?.full_name?.split(" ") ?? [];
   const firstName = firstNames[0] ?? "there";
   const lastName = firstNames.slice(1).join(" ") || null;
@@ -111,93 +93,42 @@ export default async function ProfilePage() {
             <p className="mt-0.5 text-xs text-muted">
               {profile?.roll_no || "No roll number yet"}
             </p>
-            {profile?.mess?.name && (
-              <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-[--sage-soft] px-2.5 py-0.5 text-[11px] font-semibold text-[--sage]">
-                <IconMapPin className="h-3 w-3" /> {profile.mess.name} Mess
-              </span>
-            )}
           </div>
         </div>
 
-        <div className="relative mt-4 grid grid-cols-4 gap-2 border-t border-border pt-4">
-          <div className="text-center">
-            <p className="font-display text-xl font-bold">{myRatings.length}</p>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted">Ratings</p>
-          </div>
-          <div className="text-center">
-            <p className="font-display text-xl font-bold">{myAvg ?? "—"}</p>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted">Avg</p>
-          </div>
-          <div className="text-center">
+        <div className="relative mt-4 grid grid-cols-1 gap-2 border-t border-border pt-4">
+          <div className="flex items-baseline justify-between">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted">
+              Complaints filed
+            </p>
             <p className="font-display text-xl font-bold">{myComplaints.length}</p>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted">Issues</p>
-          </div>
-          <div className="text-center">
-            <p className="font-display text-xl font-bold">{myPraisesCount}</p>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted">Praises</p>
           </div>
         </div>
       </div>
 
       <div className="mt-4">
-        <ProfileEditor
-          fullName={profile?.full_name ?? ""}
-          rollNo={profile?.roll_no ?? ""}
-          messId={profile?.mess_id ?? messes[0]?.id ?? ""}
-          messes={messes}
-        />
+        <ProfileEditor fullName={profile?.full_name ?? ""} rollNo={profile?.roll_no ?? ""} />
       </div>
 
-      <h2 className="section-label mb-3 mt-8">
-        My issues ({myComplaints.length})
-        {resolvedCount > 0 && (
-          <span className="ml-1.5 normal-case font-semibold text-[--sage]">
-            · {resolvedCount} resolved
-          </span>
-        )}
-      </h2>
+      <h2 className="section-label mb-3 mt-8">My complaints ({myComplaints.length})</h2>
       <div className="stagger space-y-2">
-        {myComplaints.map((c) => (
+        {myComplaints.map((cc) => (
           <a
-            key={c.id}
-            href={`/complaints/${c.id}`}
+            key={cc.id}
+            href={`/complaints/${cc.id}`}
             className="card card-hover block w-full p-3 text-sm"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="truncate font-medium">{c.title}</span>
-              <span className={statusColor(c.status)}>{statusLabel(c.status)}</span>
+              <span className="truncate font-medium">{cc.title}</span>
             </div>
             <p className="mt-1 flex items-center gap-1 text-xs text-muted">
-              <IconArrowUp className="h-3 w-3" /> {c.upvote_count} · {timeAgo(c.created_at)}
+              <IconArrowUp className="h-3 w-3" /> {cc.upvote_count} · {timeAgo(cc.created_at)}
             </p>
           </a>
         ))}
         {myComplaints.length === 0 && (
           <p className="card border-dashed p-4 text-center text-sm text-muted">
-            No complaints filed.
-          </p>
-        )}
-      </div>
-
-      <h2 className="section-label mb-3 mt-8">My ratings ({myRatings.length})</h2>
-      <div className="stagger space-y-2">
-        {myRatings.map((r) => (
-          <div key={r.id} className="card flex items-center justify-between p-3 text-sm">
-            <div>
-              <span className="text-[--accent]">
-                {"★".repeat(r.stars)}
-                <span className="text-muted/40">{"★".repeat(5 - r.stars)}</span>
-              </span>
-              {r.comment && (
-                <span className="ml-2 text-xs text-muted">{r.comment}</span>
-              )}
-            </div>
-            <span className="text-xs text-muted">{r.rating_date}</span>
-          </div>
-        ))}
-        {myRatings.length === 0 && (
-          <p className="card border-dashed p-4 text-center text-sm text-muted">
-            Rate a meal to see it here.
+            No complaints filed yet.
           </p>
         )}
       </div>

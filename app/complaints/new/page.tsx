@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function NewComplaintPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; mess?: string }>;
+  searchParams: Promise<{ category?: string }>;
 }) {
   const sp = await searchParams;
   const institution = await requireInstitution();
@@ -22,19 +22,9 @@ export default async function NewComplaintPage({
     .order("sort_order");
   const categories = (data ?? []) as Category[];
 
-  const isMess = sp.mess === "1";
-  let initialCategoryId = sp.category && categories.some((c) => c.id === sp.category)
+  const initialCategoryId = sp.category && categories.some((c) => c.id === sp.category)
     ? sp.category
     : null;
-  if (!initialCategoryId && isMess) {
-    initialCategoryId = categories.find((c) => c.is_mess)?.id ?? null;
-  }
 
-  return (
-    <ComplaintForm
-      categories={categories}
-      initialCategoryId={initialCategoryId}
-      isMess={isMess}
-    />
-  );
+  return <ComplaintForm categories={categories} initialCategoryId={initialCategoryId} />;
 }

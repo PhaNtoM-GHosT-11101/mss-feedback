@@ -4,14 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "./theme-provider";
-import NotificationBell from "./NotificationBell";
-import { IconHome, IconComplaint, IconPraise, IconProfile, IconPlate } from "./icons";
+import { IconHome, IconProfile } from "./icons";
 
 const tabs = [
   { href: "/", label: "Home", Icon: IconHome },
-  { href: "/complaints", label: "Issues", Icon: IconComplaint },
-  { href: "/mess", label: "Mess", Icon: IconPlate },
-  { href: "/praise", label: "Praise", Icon: IconPraise },
   { href: "/profile", label: "Profile", Icon: IconProfile },
 ];
 
@@ -43,7 +39,7 @@ export function Wordmark({
             {institutionName ?? "Campus Feedback"}
           </span>
           <span className="mt-0.5 text-[10px] font-medium text-muted">
-            {tagline || (institutionName ? "Campus feedback hub" : "File · Track · Praise")}
+            {tagline || (institutionName ? "Public suggestion box" : "Say it, it gets heard")}
           </span>
         </span>
       )}
@@ -112,7 +108,6 @@ export default function NavBar({
         <div className="border-t border-border px-3 py-4">
           <div className="flex items-center justify-between px-2 pb-2">
             <ThemeToggle />
-            <NotificationBell />
             <Link
               href="/profile"
               className="tap flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-strong transition hover:brightness-95"
@@ -136,7 +131,6 @@ export default function NavBar({
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <NotificationBell />
             <Link
               href="/profile"
               className="tap flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-xs font-bold text-accent-strong"
@@ -150,7 +144,7 @@ export default function NavBar({
 
       {/* ============ Mobile bottom nav ============ */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
-        <div className="mx-auto grid max-w-2xl grid-cols-5">
+        <div className="mx-auto grid max-w-2xl grid-cols-2">
           {tabs.map((t) => {
             const active = isActive(t.href);
             return (

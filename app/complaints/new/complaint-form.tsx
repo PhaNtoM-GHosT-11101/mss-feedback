@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, ChevronLeft, Eye, EyeOff, Utensils } from "lucide-react";
+import { Camera, ChevronLeft, Eye, EyeOff } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import { createClient } from "@/lib/supabase/client";
 import type { Category } from "@/lib/types";
@@ -18,11 +18,9 @@ const MEAL_SESSIONS = [
 export default function ComplaintForm({
   categories,
   initialCategoryId,
-  isMess,
 }: {
   categories: Category[];
   initialCategoryId: string | null;
-  isMess: boolean;
 }) {
   const router = useRouter();
   const [categoryId, setCategoryId] = useState(initialCategoryId ?? "");
@@ -32,23 +30,14 @@ export default function ComplaintForm({
   const [anonymous, setAnonymous] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
   const [leftToday, setLeftToday] = useState<number | null>(null);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [messId, setMessId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        supabase
-          .from("profiles")
-          .select("mess_id")
-          .eq("id", data.user.id)
-          .single()
-          .then(({ data: p }) => setMessId(p?.mess_id ?? null));
-      }
-    });
+    supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
     supabase.rpc("complaints_left_today").then(({ data }) => setLeftToday(data));
   }, []);
 
@@ -86,7 +75,7 @@ export default function ComplaintForm({
 
   async function submit() {
     if (!categoryId || title.trim().length < 3 || description.trim().length < 10) {
-      setError("Title (3+ chars) and description (10+ chars) required.");
+      setError("Pick a category, add a title (3+ chars) and description (10+ chars).");
       return;
     }
     setSaving(true);
@@ -120,11 +109,14 @@ export default function ComplaintForm({
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      setError("Sign in to file a complaint.");
+      setSaving(false);
+      return;
+    }
 
     const { error } = await supabase.from("complaints").insert({
       user_id: user.id,
-      mess_id: messId,
       category_id: categoryId,
       title: title.trim(),
       description: description.trim(),
@@ -142,7 +134,7 @@ export default function ComplaintForm({
       );
       return;
     }
-    router.push(isMess ? "/mess" : "/complaints");
+    router.push("/");
     router.refresh();
   }
 
@@ -156,20 +148,18 @@ export default function ComplaintForm({
         <ChevronLeft className="h-4 w-4" /> Back
       </button>
 
-      {isMess ? (
-        <>
-          <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[--plum-soft] text-[--plum]">
-              <Utensils className="h-4 w-4" />
-            </span>
-            <h1 className="text-xl font-semibold tracking-tight">Report a mess problem</h1>
-          </div>
-          <p className="mt-1 text-xs text-zinc-400">
-            Filed as a complaint — the mess committee will review and resolve it.
-          </p>
-        </>
-      ) : (
-        <h1 className="text-xl font-semibold tracking-tight">File a complaint</h1>
+      <h1 className="text-xl font-semibold tracking-tight">File a complaint</h1>
+      <p className="mt-1 text-xs text-zinc-400">
+        It appears on the board instantly — other students can upvote and comment.
+      </p>
+
+      {signedIn === false && (
+        <a
+          href="/login"
+          className="mt-3 block rounded-xl border border-dashed border-zinc-300 p-3.5 text-center text-xs font-medium text-zinc-500 transition hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+        >
+          You&apos;re browsing without an account. Sign in to name your complaint.
+        </a>
       )}
 
       {leftToday !== null && (
@@ -188,6 +178,7 @@ export default function ComplaintForm({
             onChange={(e) => setCategoryId(e.target.value)}
             className="input mt-1.5"
           >
+            <option value="">Pick a category…</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.is_mess ? "🍽 " : ""}
@@ -220,7 +211,7 @@ export default function ComplaintForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={120}
-            placeholder={isMess ? "e.g. Rice was undercooked at dinner" : "e.g. No water in my hostel block"}
+            placeholder="e.g. No water in my hostel block"
             className="input mt-1.5"
           />
         </div>
@@ -276,7 +267,7 @@ export default function ComplaintForm({
             Post anonymously
           </span>
           <span className={`text-[11px] ${anonymous ? "text-white/70 dark:text-zinc-600" : "text-zinc-400"}`}>
-            committee still sees your name
+            everyone sees it as &ldquo;Anonymous&rdquo;
           </span>
         </button>
 
@@ -291,11 +282,7 @@ export default function ComplaintForm({
           disabled={saving || (leftToday !== null && leftToday <= 0)}
           className="btn-primary w-full py-3 disabled:opacity-40"
         >
-          {saving
-            ? "Submitting…"
-            : isMess
-              ? "Submit mess complaint"
-              : "Submit complaint"}
+          {saving ? "Submitting…" : "Post to the board"}
         </button>
       </div>
       <div className="h-4" />

@@ -6,7 +6,7 @@ import CollegeTheme from "@/components/CollegeTheme";
 export const metadata: Metadata = {
   title: "Campus Feedback",
   description:
-    "Complaints, daily food ratings and praise for your campus mess and hostel life.",
+    "A public suggestion box for every college — file a complaint, get upvotes, and let the campus see what matters.",
 };
 
 export const viewport: Viewport = {

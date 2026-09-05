@@ -4,22 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, Save } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { Mess } from "@/lib/types";
 
 export default function ProfileEditor({
   fullName,
   rollNo,
-  messId,
-  messes,
 }: {
   fullName: string;
   rollNo: string;
-  messId: string;
-  messes: Mess[];
 }) {
   const router = useRouter();
   const [roll, setRoll] = useState(rollNo);
-  const [mess, setMess] = useState(messId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,7 +32,7 @@ export default function ProfileEditor({
     }
     const { error: err } = await supabase
       .from("profiles")
-      .update({ roll_no: roll.trim().slice(0, 20), mess_id: mess })
+      .update({ roll_no: roll.trim().slice(0, 20) })
       .eq("id", user.id);
     setBusy(false);
     if (err) {
@@ -69,16 +63,6 @@ export default function ProfileEditor({
           placeholder="e.g. 23CS001"
           className="input w-full"
         />
-      </div>
-      <div>
-        <label className="section-label mb-1 block" htmlFor="mess">Mess</label>
-        <select id="mess" value={mess} onChange={(e) => setMess(e.target.value)} className="input w-full">
-          {messes.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name}
-            </option>
-          ))}
-        </select>
       </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
       <div className="flex items-center gap-2 pt-1">

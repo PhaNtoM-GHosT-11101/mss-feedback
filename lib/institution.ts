@@ -61,20 +61,16 @@ const byId = unstable_cache(
 /**
  * Resolve the institution for the current request.
  *
- * The proxy sets the slug header from the URL. For authenticated users the
- * authoritative tenant is their profile's institution (which RLS also honours),
- * so a forged header can't leak someone else's scoped data. For users without
- * an institution on their profile yet (e.g. just signed up) we fall back to the
- * slug so onboarding can adopt it.
- *
- * Exception: if the user is an admin/committee member of the institution named
- * by the URL slug, the slug wins. This lets admins open and manage any college
- * they belong to, and a super-admin to browse every institution.
+ * The proxy sets the slug header from the URL (which the visitor picked or was
+ * routed to). Any college's board is open to everyone, so the slug always wins.
+ * For authenticated users with no slug in the URL we fall back to the
+ * institution on their profile (e.g. during the auth flow).
  */
 export async function getInstitution(): Promise<Institution | null> {
   const h = await headers();
   const slug = h.get(INST_HEADER);
   const slugInst = slug ? await bySlug(slug) : null;
+  if (slugInst) return slugInst;
 
   const supabase = await createClient();
   const {
@@ -86,26 +82,12 @@ export async function getInstitution(): Promise<Institution | null> {
       .select("institution_id")
       .eq("id", user.id)
       .maybeSingle();
-
-    // Admins/committee can open the institution named by the slug (lets a
-    // super-admin browse every college). Otherwise profile wins.
-    if (slugInst && profile?.institution_id) {
-      const admin = createAdminClient();
-      const { data: member } = await admin
-        .from("admin_members")
-        .select("user_id")
-        .eq("institution_id", slugInst.id)
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (member) return slugInst;
-    }
-
     if (profile?.institution_id) {
       const profInst = await byId(profile.institution_id);
       if (profInst) return profInst;
     }
   }
-  return slugInst;
+  return null;
 }
 
 /**
@@ -151,12 +133,8 @@ export function slugFromPath(path: string): string | null {
 const RESERVED_HAS = (s: string) =>
   [
     "login",
-    "onboard",
     "complaints",
-    "mess",
     "admin",
-    "stats",
-    "praise",
     "profile",
     "auth",
     "playground",

@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconPlate, IconComplaint, IconPraise } from "@/components/icons";
+import { IconPlate, IconComplaint, IconArrowUp } from "@/components/icons";
 
 function BrandPanel() {
   return (
@@ -31,30 +31,30 @@ function BrandPanel() {
         <h1 className="font-display text-4xl font-bold leading-tight tracking-tight">
           Every voice,
           <br />
-          <span className="text-[#F2B63E]">every issue resolved.</span>
+          <span className="text-[#F2B63E]">on the board.</span>
         </h1>
         <p className="mt-4 max-w-sm text-sm leading-relaxed text-[#9DB39F]">
-          File complaints across campus, track them to resolution, and celebrate
-          the teams that make your college better.
+          Your college&apos;s public suggestion box. File a complaint, vote on
+          the ones that matter, and let the whole campus see what&apos;s up.
         </p>
         <div className="mt-8 flex flex-col gap-3">
           <div className="flex items-center gap-3 text-sm text-[#EDF0E4]">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F2B63E]/15 text-[#F2B63E]">
               <IconComplaint className="h-4 w-4" />
             </span>
-            Complaints tracked across every department
+            One open board for every college
           </div>
           <div className="flex items-center gap-3 text-sm text-[#EDF0E4]">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#7FA98B]/15 text-[#7FA98B]">
-              <IconPraise className="h-4 w-4" />
+              🕶️
             </span>
-            Praise the teams that make your day
+            Post anonymously or under your name
           </div>
           <div className="flex items-center gap-3 text-sm text-[#EDF0E4]">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#B79BC6]/15 text-[#B79BC6]">
-              📊
+              <IconArrowUp className="h-4 w-4" />
             </span>
-            Real stats that actually drive change
+            Upvotes surface what matters most
           </div>
         </div>
       </div>
@@ -107,7 +107,7 @@ function LoginForm() {
             Campus Feedback
           </h1>
           <p className="mt-1.5 text-sm text-muted">
-            File · Track · Praise
+            Your college&apos;s public suggestion box
           </p>
         </div>
 
@@ -116,7 +116,7 @@ function LoginForm() {
             Welcome back 👋
           </h1>
           <p className="mt-1.5 text-sm text-muted">
-            File complaints, track resolution, praise the good.
+            Boards are open — sign in to post, vote and comment.
           </p>
         </div>
 
