@@ -63,10 +63,15 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getSession();
   const cookie = request.cookies.get(INST_COOKIE)?.value;
 
+  // --- TESTING BYPASS --------------------------------------------------------
+  // When NEXT_PUBLIC_AUTH_BYPASS=1 we skip the login wall so the app can be
+  // browsed without a Google account. Routing/login redirects are relaxed and
+  // the institution context is always injected for slug paths.
+  const BYPASS = process.env.NEXT_PUBLIC_AUTH_BYPASS === "1";
+
   // --- Path carries an institution slug --------------------------------------
   if (slug) {
-    // Not signed in: send to login and return to this college afterwards.
-    if (!session) {
+    if (!session && !BYPASS) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("next", pathname);
@@ -106,6 +111,13 @@ export async function proxy(request: NextRequest) {
     url.pathname = "/";
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
+  }
+
+  // TESTING: allow unauthenticated internal navigation through.
+  if (BYPASS && cookie) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set(INST_HEADER, cookie);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   // Not authed -> login (no institution to fall back to, so land on login).

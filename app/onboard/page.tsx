@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getInstitution, setProfileInstitution } from "@/lib/institution";
+import { AUTH_BYPASS_ENABLED } from "@/lib/testing";
 import OnboardClient from "./onboard-client";
 import type { Mess } from "@/lib/types";
 
@@ -14,7 +15,11 @@ export default async function OnboardPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    // TESTING: no account in use -> land on the picker instead of a login wall.
+    if (AUTH_BYPASS_ENABLED) redirect("/");
+    redirect("/login");
+  }
 
   const { data: profile } = await supabase
     .from("profiles")

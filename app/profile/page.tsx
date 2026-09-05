@@ -4,6 +4,7 @@ import ProfileEditor from "./profile-editor";
 import { IconArrowUp, IconMapPin } from "@/components/icons";
 import { createClient } from "@/lib/supabase/server";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
+import { AUTH_BYPASS_ENABLED } from "@/lib/testing";
 import type { Mess, Profile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,25 @@ export default async function ProfilePage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user && !AUTH_BYPASS_ENABLED) redirect("/login");
+
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 md:ml-60">
+        <NavBar />
+        <div className="card mt-8 p-8 text-center">
+          <div className="text-[40px]">👤</div>
+          <h1 className="mt-2 font-display text-xl font-bold tracking-tight">
+            No account in use
+          </h1>
+          <p className="mt-2 text-sm text-muted">
+            Auth is bypassed for testing, so there&apos;s no profile to show here.
+            Sign in normally to see your own complaints, ratings and settings.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const [prof, ms, c, r, p] = await Promise.all([
     supabase

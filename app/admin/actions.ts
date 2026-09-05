@@ -297,6 +297,7 @@ export async function deleteMenuItem(id: string) {
 export async function postAnnouncement(title: string, body: string) {
   const { db, institution } = await adminCtx();
   const { user } = await getCommittee();
+  if (!user) return;
   await db
     .from("announcements")
     .insert({ title, body, created_by: user.id, institution_id: institution.id });

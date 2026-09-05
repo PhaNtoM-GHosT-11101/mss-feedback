@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireInstitution } from "@/lib/institution";
 import { todayISO } from "@/lib/meal";
+import { AUTH_BYPASS_ENABLED } from "@/lib/testing";
 import type { Meal } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -33,15 +34,27 @@ export default async function StatsPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user && !AUTH_BYPASS_ENABLED) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, mess_id, mess:messes(name)")
-    .eq("id", user.id)
-    .single() as unknown as { data: { full_name: string | null; mess_id: string | null; mess: { name: string } | null } | null };
+  const { data: profile } = user
+    ? (await supabase
+        .from("profiles")
+        .select("full_name, mess_id, mess:messes(name)")
+        .eq("id", user.id)
+        .single()) as unknown as { data: { full_name: string | null; mess_id: string | null; mess: { name: string } | null } | null }
+    : ({ data: null } as unknown as { data: { full_name: string | null; mess_id: string | null; mess: { name: string } | null } | null });
 
-  const messId = profile?.mess_id ?? null;
+  let messId = profile?.mess_id ?? null;
+  if (messId === null && !AUTH_BYPASS_ENABLED) {
+    const { data: messRow } = await createAdminClient()
+      .from("messes")
+      .select("id")
+      .eq("institution_id", institution.id)
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+    messId = messRow?.id ?? null;
+  }
 
   const [{ data: mealsRaw }, { data: ratings30 }, { data: complaints }, { data: mealSettings }] =
     await Promise.all([

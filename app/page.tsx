@@ -13,6 +13,7 @@ import {
   IconPlate,
 } from "@/components/icons";
 import { statusColor, statusLabel, timeAgo } from "@/lib/format";
+import { AUTH_BYPASS_ENABLED } from "@/lib/testing";
 import { getInstitution, listInstitutions } from "@/lib/institution";
 import { INST_HEADER } from "@/proxy";
 import type { Praise } from "@/lib/types";
@@ -75,15 +76,15 @@ export default async function HomePage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user && !AUTH_BYPASS_ENABLED) redirect("/login");
 
-  const {
-    data: profile,
-  } = await supabase
-    .from("profiles")
-    .select("id, full_name, roll_no, is_banned")
-    .eq("id", user.id)
-    .single();
+  const { data: profile } = user
+    ? await supabase
+        .from("profiles")
+        .select("id, full_name, roll_no, is_banned")
+        .eq("id", user.id)
+        .single()
+    : { data: null };
 
   if (profile?.is_banned) {
     return (

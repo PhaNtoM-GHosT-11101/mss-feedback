@@ -8,6 +8,7 @@ import RateMeal from "@/components/RateMeal";
 import { IconComplaint, IconTrendingUp } from "@/components/icons";
 import { todayISO, todayMenuItems, mealColor } from "@/lib/meal";
 import { requireInstitution } from "@/lib/institution";
+import { AUTH_BYPASS_ENABLED } from "@/lib/testing";
 import type { Meal } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -55,23 +56,37 @@ export default async function MessPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user && !AUTH_BYPASS_ENABLED) redirect("/login");
 
   const [{ data: profile }, { data: myRatingsRaw }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, full_name, mess_id, is_banned")
-      .eq("id", user.id)
-      .single(),
-    supabase.rpc("my_ratings"),
+    user
+      ? supabase
+          .from("profiles")
+          .select("id, full_name, mess_id, is_banned")
+          .eq("id", user.id)
+          .single()
+      : { data: null },
+    user ? supabase.rpc("my_ratings") : { data: [] },
   ]);
 
   if (profile?.is_banned) {
     redirect("/");
   }
 
-  const messId = profile?.mess_id ?? null;
-  if (messId === null) redirect("/onboard");
+  let messId = profile?.mess_id ?? null;
+  if (messId === null && !AUTH_BYPASS_ENABLED) redirect("/onboard");
+  if (messId === null) {
+    // TESTING: anonymous browse -> show the first active mess.
+    const { data: messRow } = await createAdminClient()
+      .from("messes")
+      .select("id")
+      .eq("institution_id", institution.id)
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+    messId = messRow?.id ?? null;
+  }
+  if (messId === null) redirect("/");
 
   const myRatings = (myRatingsRaw ?? []).filter(
     (r: { rating_date: string }) => r.rating_date === todayISO(),
