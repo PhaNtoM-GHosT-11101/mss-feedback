@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
-import { ChevronLeft, Pin } from "lucide-react";
+import { ChevronLeft, MessageSquare, Pin } from "lucide-react";
 import Link from "next/link";
 import NavBar from "@/components/NavBar";
 import { VoteBar, CommentForm, WhatsAppShare } from "./detail-actions";
@@ -114,7 +114,7 @@ export default async function ComplaintDetailPage({
             {complaint.title}
           </h1>
 
-          <div className="mt-3 flex items-center gap-2 text-[12.5px] text-zinc-500 dark:text-zinc-400">
+          <div className="mt-3 flex items-center gap-x-1.5 gap-y-1 text-[12.5px] text-zinc-500 dark:text-zinc-400">
             <span
               className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
                 isAnonymous
@@ -184,9 +184,13 @@ export default async function ComplaintDetailPage({
             );
           })}
           {comments.length === 0 && (
-            <p className="card border-dashed p-5 text-center text-sm text-muted">
-              No comments yet. Start the conversation below.
-            </p>
+            <div className="card border-dashed p-8 text-center">
+              <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-surface2">
+                <MessageSquare className="h-5 w-5 text-muted" />
+              </span>
+              <p className="mt-2.5 text-sm font-semibold text-foreground">No comments yet</p>
+              <p className="mt-0.5 text-[13px] text-muted">Start the conversation below.</p>
+            </div>
           )}
         </div>
 

@@ -97,7 +97,7 @@ export function VoteBar({
         <button
           onClick={toggleUpvote}
           disabled={!myId}
-          className={`tap inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-bold transition ${
+          className={`tap inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-bold tabular-nums transition ${
             upvoted
               ? "border-accent bg-accent text-white shadow-[0_2px_8px_-3px_rgb(255_69_0/0.5)]"
               : "border-border bg-surface text-zinc-600 hover:border-zinc-400 dark:text-zinc-200"

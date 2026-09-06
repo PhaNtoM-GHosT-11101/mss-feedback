@@ -142,7 +142,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-svh bg-background px-4">
+    <div className="min-h-svh px-4">
       <Suspense>
         <LoginForm />
       </Suspense>

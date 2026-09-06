@@ -74,7 +74,9 @@ html {
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image: radial-gradient(70rem 26rem at 50% -12rem, rgb(255 69 0 / 0.055), transparent 62%);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 15px;
@@ -83,6 +85,10 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-theme="dark"] body {
+  background-image: radial-gradient(70rem 26rem at 50% -12rem, rgb(255 69 0 / 0.09), transparent 62%);
 }
 
 button,

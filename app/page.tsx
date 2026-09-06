@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import { ArrowRight, Info } from "lucide-react";
+import { ArrowRight, Info, Inbox } from "lucide-react";
 import { INST_HEADER } from "@/proxy";
 import { getInstitutionBySlug, listInstitutions } from "@/lib/institution";
 import { getCollegeBoard, getGlobalFeed, sortComplaints, type FeedSort } from "@/lib/feed";
@@ -176,9 +176,13 @@ async function GlobalFeedPage({
 
           <div className="mt-3 grid gap-2">
             {list.length === 0 && (
-              <p className="card border-dashed p-8 text-center text-sm text-muted">
-                No complaints yet. Visit a college and be the first to post.
-              </p>
+              <div className="card border-dashed p-10 text-center">
+                <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-surface2">
+                  <Inbox className="h-5 w-5 text-muted" />
+                </span>
+                <p className="mt-3 text-sm font-semibold text-foreground">No complaints yet</p>
+                <p className="mt-1 text-[13px] text-muted">Visit a college and be the first to post.</p>
+              </div>
             )}
             {list.map((item) => (
               <FeedCard key={item.id} item={item} />
@@ -259,9 +263,13 @@ async function CollegeBoardPage({
 
           <div className="mt-3 grid gap-2">
             {list.length === 0 && (
-              <p className="card border-dashed p-8 text-center text-sm text-muted">
-                No complaints yet. Be the first to file one.
-              </p>
+              <div className="card border-dashed p-10 text-center">
+                <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-surface2">
+                  <Inbox className="h-5 w-5 text-muted" />
+                </span>
+                <p className="mt-3 text-sm font-semibold text-foreground">No complaints yet</p>
+                <p className="mt-1 text-[13px] text-muted">Be the first to file one.</p>
+              </div>
             )}
             {list.map((item) => (
               <FeedCard key={item.id} item={item} />

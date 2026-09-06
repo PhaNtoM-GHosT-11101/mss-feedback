@@ -27,12 +27,12 @@ export default function FeedCard({ item }: { item: FeedItem }) {
       className="card card-hover group flex items-stretch overflow-hidden"
     >
       {/* Vote rail (Reddit-style, desktop) */}
-      <div className="hidden w-11 shrink-0 flex-col items-center gap-0.5 self-stretch border-r border-border/60 bg-transparent py-2.5 transition-colors duration-150 group-hover:bg-surface2/50 sm:flex">
+      <div className="hidden w-12 shrink-0 flex-col items-center gap-0.5 self-stretch border-r border-border/60 bg-transparent py-2.5 transition-colors duration-150 group-hover:bg-surface2/50 sm:flex">
         <IconArrowUp className="h-4 w-4 text-zinc-400 transition group-hover:text-accent" />
-        <span className="text-sm font-bold leading-none text-zinc-600 dark:text-zinc-300">
+        <span className="mt-0.5 text-[15px] font-bold leading-none tabular-nums text-zinc-700 dark:text-zinc-200">
           {item.upvote_count}
         </span>
-        <span className="text-[10px] font-medium leading-none text-zinc-300 dark:text-zinc-600">
+        <span className="mt-1 text-[9px] font-semibold uppercase tracking-widest text-zinc-300 dark:text-zinc-600">
           votes
         </span>
       </div>
@@ -72,7 +72,7 @@ export default function FeedCard({ item }: { item: FeedItem }) {
 
         {(meal || hasPhotos) && (
           <div className="mt-1.5 flex items-center gap-2 text-[12px] text-zinc-500 dark:text-zinc-400">
-            {meal && <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-medium dark:bg-zinc-800">{meal}</span>}
+            {meal && <span className="rounded-md bg-surface2 px-1.5 py-0.5 font-medium text-zinc-600 dark:text-zinc-300">{meal}</span>}
             {hasPhotos && <span aria-label="Has photos">📷</span>}
           </div>
         )}
