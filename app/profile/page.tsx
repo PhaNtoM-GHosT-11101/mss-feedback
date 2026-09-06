@@ -145,7 +145,7 @@ export default async function ProfilePage() {
         </div>
 
         <h2 className="section-label mt-8 mb-3">My complaints ({myComplaints.length})</h2>
-        <div className="stagger space-y-2">
+        <div className="space-y-2">
           {myComplaints.map((cc) => (
             <a
               key={cc.id}

@@ -27,7 +27,7 @@ export default function FeedCard({ item }: { item: FeedItem }) {
       className="card card-hover group flex items-stretch overflow-hidden"
     >
       {/* Vote rail (Reddit-style, desktop) */}
-      <div className="hidden w-11 shrink-0 flex-col items-center gap-0.5 self-stretch border-r border-border/60 py-2.5 sm:flex">
+      <div className="hidden w-11 shrink-0 flex-col items-center gap-0.5 self-stretch border-r border-border/60 bg-transparent py-2.5 transition-colors duration-150 group-hover:bg-surface2/50 sm:flex">
         <IconArrowUp className="h-4 w-4 text-zinc-400 transition group-hover:text-accent" />
         <span className="text-sm font-bold leading-none text-zinc-600 dark:text-zinc-300">
           {item.upvote_count}

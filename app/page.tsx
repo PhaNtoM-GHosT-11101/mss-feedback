@@ -160,8 +160,8 @@ async function GlobalFeedPage({
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="section-label">Suggestion box</p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight">All boards</h1>
-              <p className="mt-0.5 text-sm text-muted">
+              <h1 className="mt-1.5 text-[26px] leading-tight font-bold tracking-tight">All boards</h1>
+              <p className="mt-1 text-sm text-muted">
                 Every college&apos;s complaints, one feed. Pick a college below to file your own.
               </p>
             </div>
@@ -231,8 +231,8 @@ async function CollegeBoardPage({
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="section-label">Suggestion box</p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight">{institution.name}</h1>
-              <p className="mt-0.5 text-sm text-muted">
+              <h1 className="mt-1.5 text-[26px] leading-tight font-bold tracking-tight">{institution.name}</h1>
+              <p className="mt-1 text-sm text-muted">
                 Complaints about {institution.name} — the most upvoted float up.
               </p>
             </div>

@@ -65,7 +65,7 @@ export default function NavBar({
     <>
       {/* ============ Desktop sidebar ============ */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border bg-background/80 backdrop-blur-xl md:flex">
-        <div className="px-5 pb-5 pt-7">
+        <div className="border-b border-border/80 px-5 pb-4 pt-7">
           {/* Full document navigation — board pages live server-side behind a rewrite */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href="/" className="inline-block">
@@ -73,14 +73,14 @@ export default function NavBar({
           </a>
         </div>
 
-        <div className="px-5 pb-1">
+        <div className="px-5 pb-1 pt-4">
           <p className="section-label">Feeds</p>
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 px-3">
           {tabs.map((t) => {
             const active = isActive(t.href);
-            const common = `tap group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
+            const common = `tap group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
               active
                 ? "bg-accent-soft text-accent-ink"
                 : "text-muted hover:bg-surface2 hover:text-foreground"
@@ -91,14 +91,24 @@ export default function NavBar({
                 strokeWidth={active ? 2.4 : 1.9}
               />
             );
+            const strip = (
+              <span
+                aria-hidden
+                className={`absolute -left-2 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-accent transition-opacity ${
+                  active ? "opacity-100" : "opacity-0"
+                }`}
+              />
+            );
             const label = <>{t.label}</>;
             return t.href === "/" ? (
               <a key={t.href} href={t.href} className={common}>
+                {strip}
                 {icon}
                 {label}
               </a>
             ) : (
               <Link key={t.href} href={t.href} className={common}>
+                {strip}
                 {icon}
                 {label}
               </Link>

@@ -80,6 +80,9 @@ body {
   font-size: 15px;
   line-height: 1.5;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 button,
@@ -159,16 +162,6 @@ a,
 .anim-fade-up { animation: fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .anim-fade-in { animation: fade-in 0.25s ease both; }
 .anim-scale-in { animation: scale-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both; }
-
-.stagger > * {
-  animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.stagger > *:nth-child(1) { animation-delay: 0.01s; }
-.stagger > *:nth-child(2) { animation-delay: 0.04s; }
-.stagger > *:nth-child(3) { animation-delay: 0.07s; }
-.stagger > *:nth-child(4) { animation-delay: 0.1s; }
-.stagger > *:nth-child(5) { animation-delay: 0.13s; }
-.stagger > *:nth-child(6) { animation-delay: 0.16s; }
 
 .skeleton {
   border-radius: 0.75rem;

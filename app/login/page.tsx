@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { IconArrowUp, IconComplaint, IconShield } from "@/components/icons";
+import { IconArrowUp, IconCheck } from "@/components/icons";
 
 function BrandMark({ size = "md" }: { size?: "md" | "lg" }) {
   const cls = size === "lg" ? "h-12 w-12 rounded-2xl" : "h-10 w-10 rounded-xl";
@@ -115,16 +115,25 @@ function LoginForm() {
           </Link>
         </div>
 
-        <div className="mt-6 flex items-center justify-center gap-5 text-[12px] text-muted">
-          <span className="inline-flex items-center gap-1.5">
-            <IconComplaint className="h-3.5 w-3.5" /> Open boards
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <IconArrowUp className="h-3.5 w-3.5" /> Upvote what matters
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <IconShield className="h-3.5 w-3.5" /> Post anonymously
-          </span>
+        <div className="mt-6 space-y-2.5">
+          <p className="inline-flex items-center gap-2.5 text-[13px] font-medium text-zinc-600 dark:text-zinc-300">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft">
+              <IconCheck className="h-3 w-3 text-accent-strong" strokeWidth={3} />
+            </span>
+            Every college board is free to read
+          </p>
+          <p className="inline-flex items-center gap-2.5 text-[13px] font-medium text-zinc-600 dark:text-zinc-300">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft">
+              <IconCheck className="h-3 w-3 text-accent-strong" strokeWidth={3} />
+            </span>
+            Upvote what matters to you
+          </p>
+          <p className="inline-flex items-center gap-2.5 text-[13px] font-medium text-zinc-600 dark:text-zinc-300">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft">
+              <IconCheck className="h-3 w-3 text-accent-strong" strokeWidth={3} />
+            </span>
+            Post anonymously — your name stays hidden
+          </p>
         </div>
       </div>
     </div>
