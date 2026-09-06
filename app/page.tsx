@@ -174,7 +174,7 @@ async function GlobalFeedPage({
             <SortBar sort={sort} base="/" />
           </div>
 
-          <div className="stagger mt-3 grid gap-2">
+          <div className="mt-3 grid gap-2">
             {list.length === 0 && (
               <p className="card border-dashed p-8 text-center text-sm text-muted">
                 No complaints yet. Visit a college and be the first to post.
@@ -257,7 +257,7 @@ async function CollegeBoardPage({
             ))}
           </div>
 
-          <div className="stagger mt-3 grid gap-2">
+          <div className="mt-3 grid gap-2">
             {list.length === 0 && (
               <p className="card border-dashed p-8 text-center text-sm text-muted">
                 No complaints yet. Be the first to file one.

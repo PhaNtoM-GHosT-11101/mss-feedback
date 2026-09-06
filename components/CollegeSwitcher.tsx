@@ -1,7 +1,19 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, Check } from "lucide-react";
 import type { Institution } from "@/lib/institution";
+import { IconArrowUp } from "@/components/icons";
+
+function initialsFor(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("");
+}
 
 export default function CollegeSwitcher({
   institutions,
@@ -12,27 +24,102 @@ export default function CollegeSwitcher({
   current?: string;
   label?: string;
 }) {
-  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const activeBoard = institutions.find((i) => i.slug === current);
+  const triggerLabel = activeBoard ? activeBoard.name : "All boards";
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const menuItems = [
+    {
+      slug: null as string | null,
+      name: "All boards",
+    },
+    ...institutions.map((i) => ({ slug: i.slug, name: i.name })),
+  ];
 
   return (
-    <label className="inline-flex items-center gap-2 text-sm">
-      <span className="text-muted">{label}</span>
-      <select
-        value={current ?? "all"}
-        onChange={(e) => {
-          const v = e.target.value;
-          router.push(v === "all" ? "/" : `/${v}`);
-        }}
-        aria-label="Go to a college board"
-        className="max-w-[220px] cursor-pointer rounded-full border border-border bg-surface px-3 py-1.5 text-sm font-medium text-foreground outline-none transition hover:border-zinc-400 focus:border-accent focus:ring-2 focus:ring-accent/20 dark:hover:border-zinc-500"
+    <div ref={rootRef} className="relative inline-block text-left">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="tap inline-flex h-9 max-w-[240px] items-center gap-2 rounded-full border border-border bg-surface py-0 pl-3.5 pr-2.5 text-sm font-medium text-foreground outline-none transition hover:border-zinc-400 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/20"
       >
-        <option value="all">All boards</option>
-        {institutions.map((i) => (
-          <option key={i.id} value={i.slug}>
-            {i.name}
-          </option>
-        ))}
-      </select>
-    </label>
+        <span className="min-w-0 truncate">
+          {label}: <span className={activeBoard ? "font-bold" : ""}>{triggerLabel}</span>
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform duration-200 dark:text-zinc-500 ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {open && (
+        <div className="card anim-scale-in absolute right-0 z-50 mt-2 w-72 origin-top-right overflow-hidden p-1.5 shadow-xl shadow-black/10">
+          <div className="max-h-[340px] overflow-y-auto">
+            {menuItems.map((item) => {
+              const active = item.slug ? item.slug === current : !current;
+              const href = item.slug ? `/${item.slug}` : "/";
+              return (
+                <Link
+                  key={item.slug ?? "all"}
+                  href={href}
+                  scroll={false}
+                  onClick={() => setOpen(false)}
+                  className={`tap flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition ${
+                    active
+                      ? "bg-accent-soft text-accent-ink"
+                      : "text-zinc-700 hover:bg-surface2 dark:text-zinc-200"
+                  }`}
+                >
+                  {item.slug ? (
+                    <span
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${
+                        active ? "bg-accent text-white" : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                      }`}
+                    >
+                      {initialsFor(item.name)}
+                    </span>
+                  ) : (
+                    <span
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${
+                        active ? "bg-accent" : "bg-zinc-100 dark:bg-zinc-800"
+                      }`}
+                    >
+                      <IconArrowUp className="h-3.5 w-3.5 text-white" strokeWidth={2.6} />
+                    </span>
+                  )}
+                  <span className="min-w-0 truncate">{item.name}</span>
+                  {active && <Check className="ml-auto h-4 w-4 shrink-0 text-accent-strong" />}
+                </Link>
+              );
+            })}
+          </div>
+          <div className="mt-1 border-t border-border/70 pt-1.5 text-center text-[10.5px] font-medium text-muted">
+            {institutions.length} college boards
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

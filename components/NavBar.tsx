@@ -162,8 +162,7 @@ export default function NavBar({
         </div>
       </nav>
 
-      {/* spacers */}
-      <div className="hidden md:block" />
+      {/* spacer for the fixed mobile bottom nav */}
       <div
         className="md:hidden"
         style={{ height: "calc(4rem + env(safe-area-inset-bottom))" }}
