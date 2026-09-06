@@ -66,9 +66,11 @@ export default function NavBar({
       {/* ============ Desktop sidebar ============ */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border bg-background/80 backdrop-blur-xl md:flex">
         <div className="px-5 pb-5 pt-7">
-          <Link href="/" className="inline-block">
+          {/* Full document navigation — board pages live server-side behind a rewrite */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/" className="inline-block">
             <Wordmark institutionName={institutionName} tagline={tagline} />
-          </Link>
+          </a>
         </div>
 
         <div className="px-5 pb-1">
@@ -78,21 +80,27 @@ export default function NavBar({
         <nav className="flex flex-1 flex-col gap-1 px-3">
           {tabs.map((t) => {
             const active = isActive(t.href);
-            return (
-              <Link
-                key={t.href}
-                href={t.href}
-                className={`tap group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  active
-                    ? "bg-accent-soft text-accent-ink"
-                    : "text-muted hover:bg-surface2 hover:text-foreground"
-                }`}
-              >
-                <t.Icon
-                  className={`h-[18px] w-[18px] ${active ? "text-accent-strong" : "text-muted group-hover:text-foreground"}`}
-                  strokeWidth={active ? 2.4 : 1.9}
-                />
-                {t.label}
+            const common = `tap group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
+              active
+                ? "bg-accent-soft text-accent-ink"
+                : "text-muted hover:bg-surface2 hover:text-foreground"
+            }`;
+            const icon = (
+              <t.Icon
+                className={`h-[18px] w-[18px] ${active ? "text-accent-strong" : "text-muted group-hover:text-foreground"}`}
+                strokeWidth={active ? 2.4 : 1.9}
+              />
+            );
+            const label = <>{t.label}</>;
+            return t.href === "/" ? (
+              <a key={t.href} href={t.href} className={common}>
+                {icon}
+                {label}
+              </a>
+            ) : (
+              <Link key={t.href} href={t.href} className={common}>
+                {icon}
+                {label}
               </Link>
             );
           })}
@@ -119,9 +127,11 @@ export default function NavBar({
         }`}
       >
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4">
-          <Link href="/" className={scrolled ? "scale-95" : ""} style={{ transition: "transform .3s ease" }}>
+          {/* Full document navigation — board pages live server-side behind a rewrite */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/" className={scrolled ? "scale-95" : ""} style={{ transition: "transform .3s ease" }}>
             <Wordmark compact={scrolled} institutionName={institutionName} tagline={tagline} />
-          </Link>
+          </a>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link
@@ -140,22 +150,31 @@ export default function NavBar({
         <div className="mx-auto grid max-w-2xl grid-cols-2">
           {tabs.map((t) => {
             const active = isActive(t.href);
-            return (
-              <Link
-                key={t.href}
-                href={t.href}
-                className={`tap flex flex-col items-center gap-1 py-2 text-[10px] font-semibold tracking-wide transition ${
-                  active ? "text-accent-ink" : "text-muted hover:text-foreground"
-                }`}
-              >
+            const icon = (
+              <t.Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.4 : 1.8} />
+            );
+            const inner = (
+              <>
                 <span
                   className={`flex h-7 w-12 items-center justify-center rounded-full transition ${
                     active ? "bg-accent-soft" : ""
                   }`}
                 >
-                  <t.Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.4 : 1.8} />
+                  {icon}
                 </span>
                 {t.label}
+              </>
+            );
+            const common = `tap flex flex-col items-center gap-1 py-2 text-[10px] font-semibold tracking-wide transition ${
+              active ? "text-accent-ink" : "text-muted hover:text-foreground"
+            }`;
+            return t.href === "/" ? (
+              <a key={t.href} href={t.href} className={common}>
+                {inner}
+              </a>
+            ) : (
+              <Link key={t.href} href={t.href} className={common}>
+                {inner}
               </Link>
             );
           })}

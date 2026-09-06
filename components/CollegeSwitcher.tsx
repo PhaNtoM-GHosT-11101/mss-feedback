@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import type { Institution } from "@/lib/institution";
@@ -81,10 +80,9 @@ export default function CollegeSwitcher({
               const active = item.slug ? item.slug === current : !current;
               const href = item.slug ? `/${item.slug}` : "/";
               return (
-                <Link
+                <a
                   key={item.slug ?? "all"}
                   href={href}
-                  scroll={false}
                   onClick={() => setOpen(false)}
                   className={`tap flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition ${
                     active
@@ -111,7 +109,7 @@ export default function CollegeSwitcher({
                   )}
                   <span className="min-w-0 truncate">{item.name}</span>
                   {active && <Check className="ml-auto h-4 w-4 shrink-0 text-accent-strong" />}
-                </Link>
+                </a>
               );
             })}
           </div>

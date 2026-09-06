@@ -60,7 +60,7 @@ function TopBoardsCard({ institutions, total }: { institutions: Institution[]; t
       <ul className="divide-y divide-border/70">
         {institutions.slice(0, 12).map((i) => (
           <li key={i.id}>
-            <Link
+            <a
               href={`/${i.slug}`}
               className="tap group flex items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-zinc-700 transition hover:bg-surface2 dark:text-zinc-200"
             >
@@ -69,7 +69,7 @@ function TopBoardsCard({ institutions, total }: { institutions: Institution[]; t
               </span>
               <span className="min-w-0 truncate">{i.name}</span>
               <ArrowRight className="ml-auto h-3.5 w-3.5 shrink-0 text-zinc-300 transition group-hover:text-accent dark:text-zinc-600" />
-            </Link>
+            </a>
           </li>
         ))}
       </ul>
