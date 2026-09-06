@@ -15,47 +15,78 @@ export default function FeedCard({ item }: { item: FeedItem }) {
   const slug = item.institution?.slug;
   const href = slug ? `/${slug}/complaints/${item.id}` : `/complaints/${item.id}`;
   const commentCount = item.comments?.[0]?.count ?? 0;
+  const collegeName = item.institution?.name;
+  const categoryName = item.category?.name;
+  const meal = item.meal_session ? MEAL_SESSION_LABEL[item.meal_session] : null;
+  const hasPhotos = !!item.photo_urls && item.photo_urls.length > 0;
+  const isMess = !!item.category?.is_mess;
 
   return (
     <Link
       href={href}
-      className="card card-hover group flex items-start gap-3 p-3.5"
+      className="card card-hover group flex items-stretch overflow-hidden"
     >
-      <div className="flex shrink-0 flex-col items-center rounded-lg bg-[--surface-2] px-2.5 py-1.5">
-        <span className="text-sm font-bold leading-tight">{item.upvote_count}</span>
-        <IconArrowUp className="h-3 w-3 text-muted" />
+      {/* Vote rail (Reddit-style, desktop) */}
+      <div className="hidden w-11 shrink-0 flex-col items-center gap-0.5 self-stretch border-r border-border/60 py-2.5 sm:flex">
+        <IconArrowUp className="h-4 w-4 text-zinc-400 transition group-hover:text-accent" />
+        <span className="text-sm font-bold leading-none text-zinc-600 dark:text-zinc-300">
+          {item.upvote_count}
+        </span>
+        <span className="text-[10px] font-medium leading-none text-zinc-300 dark:text-zinc-600">
+          votes
+        </span>
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          {item.is_pinned && <IconPin className="h-3.5 w-3.5 shrink-0 text-[--accent]" />}
-          <p className="text-sm font-medium leading-snug text-foreground">{item.title}</p>
+
+      {/* Post body */}
+      <div className="min-w-0 flex-1 px-3.5 py-2.5">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12.5px]">
+          {item.is_pinned && (
+            <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+              <IconPin className="h-3.5 w-3.5" /> Pinned
+            </span>
+          )}
+          {collegeName && (
+            <span className="font-semibold text-zinc-700 dark:text-zinc-200">
+              {collegeName}
+            </span>
+          )}
+          {categoryName && (
+            <span className="text-zinc-500 dark:text-zinc-400">
+              {isMess ? "🍽 " : ""}
+              {categoryName}
+            </span>
+          )}
+          <span aria-hidden className="text-zinc-300 dark:text-zinc-600">·</span>
+          <span className="text-zinc-500 dark:text-zinc-400">{timeAgo(item.created_at)}</span>
         </div>
+
+        <p className="mt-1 text-[15px] font-semibold leading-snug text-foreground">
+          {item.title}
+        </p>
+
         {item.description && (
-          <p className="mt-1 line-clamp-2 text-xs text-muted">{item.description}</p>
+          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+            {item.description}
+          </p>
         )}
-        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted">
-          {slug && item.institution?.name && (
-            <span className="rounded-md bg-[--surface-2] px-1.5 py-0.5 font-medium text-[--accent-ink]">
-              {item.institution.name}
-            </span>
-          )}
-          {item.category?.name && (
-            <span className="rounded-md bg-[--accent-soft] px-1.5 py-0.5 font-medium text-[--accent-ink]">
-              {item.category.is_mess ? "🍽 " : ""}
-              {item.category.name}
-            </span>
-          )}
-          {item.meal_session && MEAL_SESSION_LABEL[item.meal_session] && (
-            <span className="rounded-md bg-[--surface-2] px-1.5 py-0.5">
-              {MEAL_SESSION_LABEL[item.meal_session]}
-            </span>
-          )}
-          <span className="hidden items-center gap-1 sm:flex">
-            <MessageCircle className="h-3 w-3" />
-            {commentCount}
+
+        {(meal || hasPhotos) && (
+          <div className="mt-1.5 flex items-center gap-2 text-[12px] text-zinc-500 dark:text-zinc-400">
+            {meal && <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-medium dark:bg-zinc-800">{meal}</span>}
+            {hasPhotos && <span aria-label="Has photos">📷</span>}
+          </div>
+        )}
+
+        {/* Action row */}
+        <div className="mt-2 flex items-center gap-4 text-[12.5px] text-zinc-500 dark:text-zinc-400">
+          <span className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 transition hover:bg-surface2">
+            <MessageCircle className="h-[15px] w-[15px]" />
+            {commentCount} {commentCount === 1 ? "comment" : "comments"}
           </span>
-          <span>{timeAgo(item.created_at)}</span>
-          {item.photo_urls && item.photo_urls.length > 0 && <span>📷</span>}
+          <span className="sm:hidden inline-flex items-center gap-1 rounded-md px-1.5 py-0.5">
+            <IconArrowUp className="h-3.5 w-3.5" />
+            {item.upvote_count}
+          </span>
         </div>
       </div>
     </Link>

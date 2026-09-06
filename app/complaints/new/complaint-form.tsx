@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, ChevronLeft, Eye, EyeOff } from "lucide-react";
+import { Camera, ChevronLeft, Eye, EyeOff, FileText } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import { createClient } from "@/lib/supabase/client";
 import type { Category } from "@/lib/types";
@@ -141,153 +141,165 @@ export default function ComplaintForm({
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4">
+    <div className="md:ml-60">
       <NavBar />
-      <button
-        onClick={() => router.back()}
-        className="mb-3 flex items-center gap-1 text-xs font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
-      >
-        <ChevronLeft className="h-4 w-4" /> Back
-      </button>
-
-      <h1 className="text-xl font-semibold tracking-tight">File a complaint</h1>
-      <p className="mt-1 text-xs text-zinc-400">
-        It appears on the board instantly — other students can upvote and comment.
-      </p>
-
-      {signedIn === false && (
-        <a
-          href="/login"
-          className="mt-3 block rounded-xl border border-dashed border-zinc-300 p-3.5 text-center text-xs font-medium text-zinc-500 transition hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+      <main className="mx-auto max-w-2xl px-4 pb-10 pt-4">
+        <button
+          onClick={() => router.back()}
+          className="tap mb-3 inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[13px] font-medium text-zinc-500 transition hover:bg-surface2 hover:text-foreground dark:text-zinc-400"
         >
-          You&apos;re browsing without an account. Sign in to name your complaint.
-        </a>
-      )}
+          <ChevronLeft className="h-4 w-4" /> Back
+        </button>
 
-      {leftToday !== null && (
-        <p className="mt-1 text-xs text-zinc-400">
-          {leftToday > 0
-            ? `${leftToday} complaint${leftToday > 1 ? "s" : ""} left today`
-            : "Daily limit reached"}
-        </p>
-      )}
-
-      <div className="card mt-4 space-y-4 p-4">
-        <div>
-          <label className="section-label">Category</label>
-          <select
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="input mt-1.5"
-          >
-            <option value="">Pick a category…</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.is_mess ? "🍽 " : ""}
-                {c.name}
-              </option>
-            ))}
-          </select>
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft">
+            <FileText className="h-5 w-5 text-accent-ink" />
+          </span>
+          <div>
+            <h1 className="text-lg font-bold tracking-tight">File a complaint</h1>
+            <p className="text-[13px] text-muted">
+              Shows up on the board instantly — others can upvote and comment.
+            </p>
+          </div>
         </div>
 
-        {showMealSession && (
-          <div>
-            <label className="section-label">Which meal is this about?</label>
-            <select
-              value={mealSession}
-              onChange={(e) => setMealSession(e.target.value)}
-              className="input mt-1.5"
-            >
-              {MEAL_SESSIONS.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        {signedIn === false && (
+          <a
+            href="/login"
+            className="mt-4 block rounded-xl border border-dashed border-border p-3.5 text-center text-[13px] font-medium text-muted transition hover:border-accent hover:text-foreground"
+          >
+            You&apos;re browsing without an account. Sign in to name your complaint.
+          </a>
         )}
 
-        <div>
-          <label className="section-label">Title</label>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={120}
-            placeholder="e.g. No water in my hostel block"
-            className="input mt-1.5"
-          />
-        </div>
+        {leftToday !== null && (
+          <p className="mt-2 text-[12.5px] text-muted">
+            {leftToday > 0
+              ? `${leftToday} complaint${leftToday > 1 ? "s" : ""} left today`
+              : "Daily limit reached"}
+          </p>
+        )}
 
-        <div>
-          <label className="section-label">Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            maxLength={2000}
-            rows={4}
-            placeholder="Describe the issue — what happened, where, when…"
-            className="input mt-1.5 resize-none"
-          />
-        </div>
+        <div className="card mt-4 space-y-5 p-4 md:p-5">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label className="section-label">Category</label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="input mt-1.5"
+              >
+                <option value="">Pick a category…</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.is_mess ? "🍽 " : ""}
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <div>
-          <label className="section-label">Photos (optional, max 2 · ≤10 MB each)</label>
+            {showMealSession ? (
+              <div>
+                <label className="section-label">Which meal is this about?</label>
+                <select
+                  value={mealSession}
+                  onChange={(e) => setMealSession(e.target.value)}
+                  className="input mt-1.5"
+                >
+                  {MEAL_SESSIONS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div />
+            )}
+          </div>
+
+          <div>
+            <label className="section-label">Title</label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={120}
+              placeholder="e.g. No water in my hostel block"
+              className="input mt-1.5"
+            />
+          </div>
+
+          <div>
+            <label className="section-label">Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={2000}
+              rows={4}
+              placeholder="Describe the issue — what happened, where, when…"
+              className="input mt-1.5 resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="section-label">Photos (optional, max 2 · ≤10 MB each)</label>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="mt-1.5 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-4 text-sm text-muted transition hover:border-accent hover:text-foreground"
+            >
+              <Camera className="h-4 w-4" />
+              {photos.length > 0 ? `${photos.length} photo${photos.length > 1 ? "s" : ""} selected` : "Add photos"}
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => setPhotos(Array.from(e.target.files ?? []).slice(0, 2))}
+              className="hidden"
+            />
+            {photos.length > 0 && (
+              <p className="mt-1.5 truncate text-xs text-muted">
+                {photos.map((p) => p.name).join(", ")}
+              </p>
+            )}
+          </div>
+
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
-            className="mt-1.5 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-300 py-4 text-sm text-zinc-500 transition hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+            onClick={() => setAnonymous(!anonymous)}
+            className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-3 text-sm transition ${
+              anonymous
+                ? "border-accent bg-accent text-white"
+                : "border-border text-zinc-600 hover:border-zinc-400 dark:text-zinc-300"
+            }`}
           >
-            <Camera className="h-4 w-4" />
-            {photos.length > 0 ? `${photos.length} photo${photos.length > 1 ? "s" : ""} selected` : "Add photos"}
+            <span className="flex items-center gap-2 font-semibold">
+              {anonymous ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              Post anonymously
+            </span>
+            <span className={`text-[11px] ${anonymous ? "text-white/80" : "text-muted"}`}>
+              everyone sees it as &ldquo;Anonymous&rdquo;
+            </span>
           </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(e) => setPhotos(Array.from(e.target.files ?? []).slice(0, 2))}
-            className="hidden"
-          />
-          {photos.length > 0 && (
-            <p className="mt-1.5 truncate text-xs text-zinc-400">
-              {photos.map((p) => p.name).join(", ")}
-            </p>
+
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">
+              {error}
+            </div>
           )}
+
+          <button
+            onClick={submit}
+            disabled={saving || (leftToday !== null && leftToday <= 0)}
+            className="btn-primary w-full py-3"
+          >
+            {saving ? "Submitting…" : "Post to the board"}
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setAnonymous(!anonymous)}
-          className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-3 text-sm transition ${
-            anonymous
-              ? "border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900"
-              : "border-zinc-200 text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-300"
-          }`}
-        >
-          <span className="flex items-center gap-2">
-            {anonymous ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            Post anonymously
-          </span>
-          <span className={`text-[11px] ${anonymous ? "text-white/70 dark:text-zinc-600" : "text-zinc-400"}`}>
-            everyone sees it as &ldquo;Anonymous&rdquo;
-          </span>
-        </button>
-
-        {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">
-            {error}
-          </div>
-        )}
-
-        <button
-          onClick={submit}
-          disabled={saving || (leftToday !== null && leftToday <= 0)}
-          className="btn-primary w-full py-3 disabled:opacity-40"
-        >
-          {saving ? "Submitting…" : "Post to the board"}
-        </button>
-      </div>
-      <div className="h-4" />
+      </main>
     </div>
   );
 }

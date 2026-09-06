@@ -10,7 +10,7 @@ const options: { key: FeedSort; label: string; Icon: typeof Flame }[] = [
 
 export default function SortBar({ sort, base }: { sort: FeedSort; base: string }) {
   return (
-    <div className="flex items-center gap-1 rounded-xl bg-[--surface-2] p-1 text-sm">
+    <div className="flex items-center gap-0.5 border-b border-border text-[13px]">
       {options.map(({ key, label, Icon }) => {
         const active = sort === key;
         const href = key === "hot" ? base : `${base}${base.includes("?") ? "&" : "?"}sort=${key}`;
@@ -19,13 +19,16 @@ export default function SortBar({ sort, base }: { sort: FeedSort; base: string }
             key={key}
             href={href}
             scroll={false}
-            className={`tap flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-semibold transition ${
+            className={`tap -mb-px flex items-center gap-1.5 rounded-t-lg border-b-2 px-3 py-2 transition ${
               active
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted hover:text-foreground"
+                ? "border-accent font-bold text-foreground"
+                : "border-transparent font-medium text-muted hover:bg-surface2 hover:text-foreground"
             }`}
           >
-            <Icon className={`h-3.5 w-3.5 ${active ? "text-[--accent]" : ""}`} />
+            <Icon
+              className={`h-3.5 w-3.5 ${active ? "text-accent" : "text-zinc-400 dark:text-zinc-500"}`}
+              strokeWidth={active ? 2.4 : 1.9}
+            />
             {label}
           </Link>
         );

@@ -54,7 +54,7 @@ export default async function AdminPage({
       <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <span className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-b from-[#4A7B5C] to-[#3E6B4F] text-white shadow-[0_3px_12px_-3px_rgb(62_107_79/0.6)]">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-white shadow-[0_3px_12px_-3px_rgb(255_69_0/0.6)]">
               <IconShield className="h-4 w-4" strokeWidth={1.9} />
             </span>
             <span className="flex flex-col leading-none">

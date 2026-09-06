@@ -14,7 +14,7 @@ export function WhatsAppShare({ title }: { title: string }) {
         const text = encodeURIComponent(`Campus Feedback — ${title}:\n${window.location.href}`);
         window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
       }}
-      className="tap flex items-center gap-1.5 rounded-full border border-border bg-surface2 px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-border"
+      className="tap inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-surface2"
     >
       <IconWhatsApp className="h-3.5 w-3.5 text-[#25D366]" /> Share
     </button>
@@ -92,25 +92,25 @@ export function VoteBar({
   }
 
   return (
-    <div className="mt-4">
-      <div className="flex items-center gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+    <div className="mt-4 border-t border-border pt-3">
+      <div className="flex items-center gap-2">
         <button
           onClick={toggleUpvote}
           disabled={!myId}
-          className={`tap flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+          className={`tap inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-bold transition ${
             upvoted
-              ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-              : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200"
+              ? "border-accent bg-accent text-white shadow-[0_2px_8px_-3px_rgb(255_69_0/0.5)]"
+              : "border-border bg-surface text-zinc-600 hover:border-zinc-400 dark:text-zinc-200"
           } ${!myId ? "opacity-50" : ""}`}
           title={myId ? "Vote" : "Sign in to vote"}
         >
-          <ArrowUp className="h-4 w-4" />
+          <ArrowUp className={`h-4 w-4 ${upvoted ? "text-white" : ""}`} />
           {count}
         </button>
         {isOwner && canDelete && (
           <button
             onClick={deleteComplaint}
-            className="tap flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-400 transition hover:text-red-600"
+            className="tap inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition hover:bg-red-500/10 dark:text-red-400"
           >
             <Trash2 className="h-3.5 w-3.5" /> Delete
           </button>
@@ -118,7 +118,7 @@ export function VoteBar({
         {!myId && (
           <a
             href="/login"
-            className="ml-auto hidden text-xs font-medium text-zinc-400 hover:text-zinc-600 sm:block"
+            className="ml-auto hidden text-xs font-medium text-muted transition hover:text-foreground sm:block"
           >
             Sign in to vote or comment
           </a>
@@ -170,7 +170,7 @@ export function CommentForm({ complaintId }: { complaintId: string }) {
     return (
       <a
         href="/login"
-        className="block rounded-xl border border-dashed border-border p-4 text-center text-xs font-medium text-muted transition hover:border-accent hover:text-foreground"
+        className="block rounded-xl border border-dashed border-border p-4 text-center text-[13px] font-medium text-muted transition hover:border-accent hover:text-foreground"
       >
         Sign in to join the conversation
       </a>
@@ -187,14 +187,18 @@ export function CommentForm({ complaintId }: { complaintId: string }) {
           placeholder="Add a comment…"
           className="input flex-1"
         />
-        <button onClick={post} disabled={!text.trim() || busy} className="btn-primary tap px-4 text-xs disabled:opacity-40">
+        <button
+          onClick={post}
+          disabled={!text.trim() || busy}
+          className="btn-primary tap px-4 text-xs disabled:opacity-40"
+        >
           {busy ? "Posting…" : "Post"}
         </button>
       </div>
       {posted && !failed && (
         <div className="card mt-2 p-3 text-sm opacity-90">
           <p>{posted}</p>
-          <p className="mt-1 text-xs text-zinc-400">You · just now</p>
+          <p className="mt-1 text-xs text-muted">You · just now</p>
         </div>
       )}
       {failed && <p className="mt-2 text-xs text-red-500">Comment not posted. Please try again.</p>}

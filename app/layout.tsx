@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import CollegeTheme from "@/components/CollegeTheme";
 
 export const metadata: Metadata = {
   title: "Campus Feedback",
@@ -41,7 +40,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://gmkzcxvgbhhvznbkxlae.supabase.co" />
       </head>
       <body className="min-h-svh bg-background text-foreground antialiased">
-        <CollegeTheme />
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

@@ -52,6 +52,15 @@ const getData = unstable_cache(
   { revalidate: 30, tags: ["complaint"] },
 );
 
+function initialsFor(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("");
+}
+
 export default async function ComplaintDetailPage({
   params,
 }: {
@@ -68,91 +77,123 @@ export default async function ComplaintDetailPage({
   } = await session.auth.getUser();
   const isOwner = !!user && complaint.user_id === user.id;
 
+  const isAnonymous = complaint.is_anonymous || !complaint.complaint_author;
+  const authorName = isAnonymous
+    ? "Anonymous"
+    : complaint.complaint_author ?? "Unknown";
+  const authorRoll = complaint.complaint_author_roll;
+
   return (
-    <div className="mx-auto max-w-2xl px-4">
+    <div className="md:ml-60">
       <NavBar institutionName={institution.name} tagline={institution.tagline} />
-      <Link
-        href={`/${institution.slug}`}
-        className="mb-3 flex items-center gap-1 text-xs font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
-      >
-        <ChevronLeft className="h-4 w-4" /> Back to {institution.name}&apos;s board
-      </Link>
 
-      <div className="card p-4">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {complaint.is_pinned && (
-            <Pin className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-          )}
-          {category && (
-            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-              {category.is_mess ? "🍽 " : ""}
-              {category.name}
-            </span>
-          )}
-        </div>
+      <main className="mx-auto max-w-2xl px-4 pb-10 pt-4">
+        <Link
+          href={`/${institution.slug}`}
+          className="tap mb-3 inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[13px] font-medium text-zinc-500 transition hover:bg-surface2 hover:text-foreground dark:text-zinc-400"
+        >
+          <ChevronLeft className="h-4 w-4" /> {institution.name}&apos;s board
+        </Link>
 
-        <h1 className="mt-2.5 text-lg font-semibold tracking-tight">{complaint.title}</h1>
-        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
-          {complaint.description}
-        </p>
-
-        {complaint.photo_urls.length > 0 && (
-          <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
-            {complaint.photo_urls.map((u) => (
-              <img
-                key={u}
-                src={u}
-                alt="complaint evidence"
-                loading="lazy"
-                className="aspect-square h-28 w-28 shrink-0 rounded-lg object-cover ring-1 ring-zinc-100 dark:ring-zinc-800"
-              />
-            ))}
+        <article className="card p-4 md:p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            {category && (
+              <span className="inline-flex items-center rounded-full bg-accent-soft px-2.5 py-0.5 text-[11.5px] font-semibold text-accent-ink">
+                {category.is_mess ? "🍽 " : ""}
+                {category.name}
+              </span>
+            )}
+            {complaint.is_pinned && (
+              <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-emerald-600 dark:text-emerald-400">
+                <Pin className="h-3.5 w-3.5" /> Pinned
+              </span>
+            )}
           </div>
-        )}
 
-        <div className="mt-3 flex items-center gap-2 text-xs text-zinc-400">
-          <span className="font-medium text-zinc-600 dark:text-zinc-300">
-            {complaint.is_anonymous || !complaint.complaint_author
-              ? "Anonymous"
-              : `${complaint.complaint_author}${complaint.complaint_author_roll ? ` (${complaint.complaint_author_roll})` : ""}`}
-          </span>
-          <span>·</span>
-          <span>{timeAgo(complaint.created_at)}</span>
+          <h1 className="mt-2.5 text-xl font-bold leading-snug tracking-tight">
+            {complaint.title}
+          </h1>
+
+          <div className="mt-3 flex items-center gap-2 text-[12.5px] text-zinc-500 dark:text-zinc-400">
+            <span
+              className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
+                isAnonymous
+                  ? "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-300"
+                  : "bg-accent text-white"
+              }`}
+            >
+              {initialsFor(authorName)}
+            </span>
+            <span className="font-medium text-zinc-700 dark:text-zinc-200">
+              {authorName}
+              {authorRoll ? ` · ${authorRoll}` : ""}
+            </span>
+            <span aria-hidden>·</span>
+            <span>{timeAgo(complaint.created_at)}</span>
+          </div>
+
+          <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-zinc-700 dark:text-zinc-200">
+            {complaint.description}
+          </p>
+
+          {complaint.photo_urls.length > 0 && (
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {complaint.photo_urls.map((u) => (
+                <img
+                  key={u}
+                  src={u}
+                  alt="complaint evidence"
+                  loading="lazy"
+                  className="aspect-square w-full rounded-lg object-cover ring-1 ring-border"
+                />
+              ))}
+            </div>
+          )}
+
+          <VoteBar
+            isOwner={isOwner}
+            complaintId={id}
+            upvotes={complaint.upvote_count}
+            returnTo={`/${institution.slug}`}
+          />
+
+          <div className="mt-3 border-t border-border pt-3">
+            <CommentForm complaintId={id} />
+          </div>
+        </article>
+
+        <h2 className="section-label mt-7 mb-3">Comments ({comments.length})</h2>
+        <div className="space-y-2">
+          {comments.map((cm) => {
+            const cAuthor = cm.comment_author ?? "Unknown";
+            return (
+              <div key={cm.id} className="card flex items-start gap-2.5 p-3.5">
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-[10px] font-bold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+                  {initialsFor(cAuthor) || "?"}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-[12.5px]">
+                    <span className="font-semibold text-zinc-700 dark:text-zinc-200">{cAuthor}</span>
+                    <span className="text-zinc-400 dark:text-zinc-500">{timeAgo(cm.created_at)}</span>
+                  </div>
+                  <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-200">
+                    {cm.body}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+          {comments.length === 0 && (
+            <p className="card border-dashed p-5 text-center text-sm text-muted">
+              No comments yet. Start the conversation below.
+            </p>
+          )}
         </div>
 
-        <VoteBar
-          isOwner={isOwner}
-          complaintId={id}
-          upvotes={complaint.upvote_count}
-          returnTo={`/${institution.slug}`}
-        />
-
-        <div className="mt-3">
+        <div className="mt-4">
           <WhatsAppShare title={complaint.title} />
         </div>
-
-        <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-          <CommentForm complaintId={id} />
-        </div>
-      </div>
-
-      <h2 className="section-label mb-3 mt-8">Comments ({comments.length})</h2>
-      <div className="space-y-2">
-        {comments.map((cm) => (
-          <div key={cm.id} className="card p-3 text-sm">
-            <p>{cm.body}</p>
-            <p className="mt-1 text-xs text-zinc-400">
-              {cm.comment_author ?? "Unknown"} · {timeAgo(cm.created_at)}
-            </p>
-          </div>
-        ))}
-        {comments.length === 0 && (
-          <p className="card border-dashed p-5 text-center text-sm text-zinc-400">
-            No comments yet.
-          </p>
-        )}
-      </div>
-      <div className="h-4" />
+      </main>
     </div>
   );
 }

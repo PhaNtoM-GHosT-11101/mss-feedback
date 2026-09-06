@@ -23,7 +23,8 @@ export default function CollegeSwitcher({
           const v = e.target.value;
           router.push(v === "all" ? "/" : `/${v}`);
         }}
-        className="max-w-[220px] rounded-lg border border-border bg-background px-2 py-1.5 text-sm font-medium text-foreground outline-none focus:border-[--accent]"
+        aria-label="Go to a college board"
+        className="max-w-[220px] cursor-pointer rounded-full border border-border bg-surface px-3 py-1.5 text-sm font-medium text-foreground outline-none transition hover:border-zinc-400 focus:border-accent focus:ring-2 focus:ring-accent/20 dark:hover:border-zinc-500"
       >
         <option value="all">All boards</option>
         {institutions.map((i) => (

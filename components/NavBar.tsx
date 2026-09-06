@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "./theme-provider";
-import { IconHome, IconProfile } from "./icons";
+import { IconHome, IconProfile, IconArrowUp } from "./icons";
 
 const tabs = [
   { href: "/", label: "Home", Icon: IconHome },
@@ -20,25 +20,17 @@ export function Wordmark({
   institutionName?: string;
   tagline?: string | null;
 }) {
-  const initials = (institutionName ?? "CF")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase())
-    .join("");
   return (
     <span className="flex items-center gap-2.5">
-      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[--accent] text-[--accent-ink] shadow-[0_3px_12px_-3px_rgb(0_0_0/0.35)]">
-        <span className="font-display text-[13px] font-extrabold tracking-tight">
-          {initials}
-        </span>
+      <span className="flex h-8 w-8 items-center justify-center rounded-[0.6rem] bg-accent shadow-[0_2px_8px_-2px_rgb(255_69_0/0.55)]">
+        <IconArrowUp className="h-4 w-4 text-white" strokeWidth={2.6} />
       </span>
       {!compact && (
         <span className="flex flex-col leading-none">
-          <span className="font-display text-[15px] font-bold tracking-tight text-foreground">
+          <span className="text-[15px] font-bold tracking-tight text-foreground">
             {institutionName ?? "Campus Feedback"}
           </span>
-          <span className="mt-0.5 text-[10px] font-medium text-muted">
+          <span className="mt-0.5 text-[10.5px] font-medium text-muted">
             {tagline || (institutionName ? "Public suggestion box" : "Say it, it gets heard")}
           </span>
         </span>
@@ -72,11 +64,15 @@ export default function NavBar({
   return (
     <>
       {/* ============ Desktop sidebar ============ */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border bg-surface/70 backdrop-blur-xl md:flex">
-        <div className="px-5 pb-6 pt-7">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border bg-background/80 backdrop-blur-xl md:flex">
+        <div className="px-5 pb-5 pt-7">
           <Link href="/" className="inline-block">
             <Wordmark institutionName={institutionName} tagline={tagline} />
           </Link>
+        </div>
+
+        <div className="px-5 pb-1">
+          <p className="section-label">Feeds</p>
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 px-3">
@@ -86,31 +82,28 @@ export default function NavBar({
               <Link
                 key={t.href}
                 href={t.href}
-                className={`tap group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                className={`tap group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
                   active
-                    ? "bg-accent-soft text-accent-strong"
+                    ? "bg-accent-soft text-accent-ink"
                     : "text-muted hover:bg-surface2 hover:text-foreground"
                 }`}
               >
                 <t.Icon
-                  className={`h-[19px] w-[19px] ${active ? "text-accent-strong" : "text-muted group-hover:text-foreground"}`}
-                  strokeWidth={active ? 2.3 : 1.9}
+                  className={`h-[18px] w-[18px] ${active ? "text-accent-strong" : "text-muted group-hover:text-foreground"}`}
+                  strokeWidth={active ? 2.4 : 1.9}
                 />
                 {t.label}
-                {active && (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-accent" />
-                )}
               </Link>
             );
           })}
         </nav>
 
         <div className="border-t border-border px-3 py-4">
-          <div className="flex items-center justify-between px-2 pb-2">
+          <div className="flex items-center justify-between px-2">
             <ThemeToggle />
             <Link
               href="/profile"
-              className="tap flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-strong transition hover:brightness-95"
+              className="tap flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-ink transition hover:brightness-95"
               aria-label="Profile"
             >
               {(userName ?? "?")[0]?.toUpperCase()}
@@ -133,7 +126,7 @@ export default function NavBar({
             <ThemeToggle />
             <Link
               href="/profile"
-              className="tap flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-xs font-bold text-accent-strong"
+              className="tap flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-xs font-bold text-accent-ink"
               aria-label="Profile"
             >
               {(userName ?? "?")[0]?.toUpperCase()}
@@ -152,7 +145,7 @@ export default function NavBar({
                 key={t.href}
                 href={t.href}
                 className={`tap flex flex-col items-center gap-1 py-2 text-[10px] font-semibold tracking-wide transition ${
-                  active ? "text-accent-strong" : "text-muted hover:text-foreground"
+                  active ? "text-accent-ink" : "text-muted hover:text-foreground"
                 }`}
               >
                 <span
@@ -160,7 +153,7 @@ export default function NavBar({
                     active ? "bg-accent-soft" : ""
                   }`}
                 >
-                  <t.Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.3 : 1.8} />
+                  <t.Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.4 : 1.8} />
                 </span>
                 {t.label}
               </Link>
