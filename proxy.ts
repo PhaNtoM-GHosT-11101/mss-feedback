@@ -91,9 +91,9 @@ export async function proxy(request: NextRequest) {
     return nextResponse;
   };
 
-  // Home doubles as the board: return the visitor to the college they last used.
+  // Home is the global "all boards" feed — no college context needed.
   if (pathname === "/") {
-    return inject(NextResponse.next());
+    return NextResponse.next();
   }
 
   // Public/auth flows reachable without an institution.

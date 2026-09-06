@@ -25,10 +25,12 @@ export function VoteBar({
   complaintId,
   upvotes,
   isOwner,
+  returnTo,
 }: {
   complaintId: string;
   upvotes: number;
   isOwner: boolean;
+  returnTo: string;
 }) {
   const router = useRouter();
   const [myId, setMyId] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export function VoteBar({
     const { error } = await supabase.from("complaints").delete().eq("id", complaintId);
     if (!error) {
       await revalidateComplaint();
-      router.push("/");
+      router.push(returnTo);
       router.refresh();
     } else {
       setError(error.message);

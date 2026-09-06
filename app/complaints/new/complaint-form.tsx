@@ -18,9 +18,11 @@ const MEAL_SESSIONS = [
 export default function ComplaintForm({
   categories,
   initialCategoryId,
+  returnTo,
 }: {
   categories: Category[];
   initialCategoryId: string | null;
+  returnTo: string;
 }) {
   const router = useRouter();
   const [categoryId, setCategoryId] = useState(initialCategoryId ?? "");
@@ -134,7 +136,7 @@ export default function ComplaintForm({
       );
       return;
     }
-    router.push("/");
+    router.push(returnTo);
     router.refresh();
   }
 

@@ -122,15 +122,15 @@ async function main() {
 
   // ---- AUTH & NAVIGATION (boards are public now) ----
   let r = await request("/nit-agartala");
-  record("AUTH: anonymous board reachable without login", r.status === 200 && r.body.includes("Community board"), `status ${r.status}`);
+  record("AUTH: anonymous college board reachable", r.status === 200 && r.body.includes("NIT Agartala") && r.body.includes("Suggestion box"), `status ${r.status}`);
   r = await request("/nit-agartala/mess");
   record("NAV: legacy /mess bounces to board", r.status === 307 && (r.headers.get("location") ?? "").endsWith("/nit-agartala"), `status ${r.status} loc ${r.headers.get("location")}`);
   r = await request("/mess");
-  record("NAV: legacy top-level /mess -> home (picker)", r.status === 307, `status ${r.status} loc ${r.headers.get("location")}`);
+  record("NAV: legacy top-level /mess -> global feed", r.status === 307, `status ${r.status} loc ${r.headers.get("location")}`);
   r = await request("/");
-  record("NAV: / without cookie renders picker", r.status === 200 && r.body.includes("suggestion box"), `status ${r.status}`);
+  record("NAV: / without cookie renders global feed", r.status === 200 && r.body.includes("All boards"), `status ${r.status}`);
   r = await request("/", { cookie: cookieSlug });
-  record("NAV: / with cookie returns to board", r.status === 200 && r.body.includes("Community board"), `status ${r.status} ${r.body.includes("Community board") ? "" : r.body.slice(0,120)}`);
+  record("NAV: / with cookie still shows global feed", r.status === 200 && r.body.includes("All boards"), `status ${r.status}`);
   r = await request("/login");
   record("AUTH: /login renders public", r.status === 200);
   r = await request("/nit-agartala/complaints", { cookie: cookieSlug });

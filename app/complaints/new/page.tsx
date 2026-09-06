@@ -26,5 +26,11 @@ export default async function NewComplaintPage({
     ? sp.category
     : null;
 
-  return <ComplaintForm categories={categories} initialCategoryId={initialCategoryId} />;
+  return (
+    <ComplaintForm
+      categories={categories}
+      initialCategoryId={initialCategoryId}
+      returnTo={`/${institution.slug}`}
+    />
+  );
 }

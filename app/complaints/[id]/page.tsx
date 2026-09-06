@@ -72,10 +72,10 @@ export default async function ComplaintDetailPage({
     <div className="mx-auto max-w-2xl px-4">
       <NavBar institutionName={institution.name} tagline={institution.tagline} />
       <Link
-        href="/"
+        href={`/${institution.slug}`}
         className="mb-3 flex items-center gap-1 text-xs font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
       >
-        <ChevronLeft className="h-4 w-4" /> Back to board
+        <ChevronLeft className="h-4 w-4" /> Back to {institution.name}&apos;s board
       </Link>
 
       <div className="card p-4">
@@ -120,7 +120,12 @@ export default async function ComplaintDetailPage({
           <span>{timeAgo(complaint.created_at)}</span>
         </div>
 
-        <VoteBar isOwner={isOwner} complaintId={id} upvotes={complaint.upvote_count} />
+        <VoteBar
+          isOwner={isOwner}
+          complaintId={id}
+          upvotes={complaint.upvote_count}
+          returnTo={`/${institution.slug}`}
+        />
 
         <div className="mt-3">
           <WhatsAppShare title={complaint.title} />
