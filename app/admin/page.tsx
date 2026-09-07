@@ -5,6 +5,7 @@ import { getSuperAdmin } from "@/lib/admin-guard";
 import { type Institution } from "@/lib/institution";
 import CollegesManager from "./colleges";
 import CategoriesPanel from "./categories";
+import FlagsPanel, { type FlagGroup } from "./flags";
 import { IconHome, IconShield } from "@/components/icons";
 import type { Category } from "@/lib/types";
 
@@ -36,11 +37,50 @@ export default async function AdminPage({
   const g = await getSuperAdmin();
   const { institutions, complaintCount, categoryCount } = await getAdminData();
 
+  const db = createAdminClient();
+  const { data: flags } = await db
+    .from("complaint_flags")
+    .select(
+      "complaint_id, created_at, complaint:complaints(id, title, is_flagged, institution:institutions(name, slug))",
+    )
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  const flagGroups: FlagGroup[] = [];
+  const byId = new Map<string, FlagGroup>();
+  for (const f of flags ?? []) {
+    const c = f.complaint as unknown as
+      | {
+          id: string;
+          title: string;
+          is_flagged: boolean;
+          institution: { name: string; slug: string }[] | null;
+        }
+      | null;
+    if (!c) continue;
+    const institution = Array.isArray(c.institution) ? c.institution[0] ?? null : c.institution ?? null;
+    const existing = byId.get(c.id);
+    if (existing) {
+      existing.count += 1;
+      if ((f.created_at ?? "") > (existing.latest ?? "")) existing.latest = f.created_at;
+      continue;
+    }
+    const group: FlagGroup = {
+      complaintId: c.id,
+      title: c.title,
+      institution,
+      isFlagged: c.is_flagged,
+      count: 1,
+      latest: f.created_at ?? null,
+    };
+    byId.set(c.id, group);
+    flagGroups.push(group);
+  }
+
   const sp = await searchParams;
   const selected = institutions.find((i) => i.id === sp.college) ?? null;
   let categories: Category[] = [];
   if (selected) {
-    const db = createAdminClient();
     const { data } = await db
       .from("complaint_categories")
       .select("*")
@@ -89,8 +129,17 @@ export default async function AdminPage({
           </p>
         </div>
         <p className="mt-1 text-xs text-muted">
-          Only the person who built the app can open this page.
+          Only the person who built the app can change anything here.
+          {!g.isCreator && (
+            <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+              read-only preview
+            </span>
+          )}
         </p>
+
+        <div className="mt-5">
+          <FlagsPanel groups={flagGroups} />
+        </div>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
           <CollegesManager institutions={institutions} selectedId={selected?.id ?? null} />

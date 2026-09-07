@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
+import type { Metadata } from "next";
 import { ChevronLeft, Pin } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import NavBar from "@/components/NavBar";
 import {
@@ -9,6 +11,7 @@ import {
   ThreadedComments,
   WhatsAppShare,
 } from "./detail-actions";
+import ReportButton from "@/components/ReportButton";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createSessionClient } from "@/lib/supabase/server";
 import { requireInstitution } from "@/lib/institution";
@@ -23,7 +26,7 @@ const getData = unstable_cache(
     const [c, cm] = await Promise.all([
       db
         .from("complaints")
-        .select("*, complaint_author")
+        .select("*, complaint_author, category:complaint_categories(*)")
         .eq("id", id)
         .eq("institution_id", institutionId)
         .eq("is_flagged", false)
@@ -37,20 +40,11 @@ const getData = unstable_cache(
         .order("created_at"),
     ]);
     if (!c.data) return null;
-    const catData = c.data.category_id
-      ? (
-          await db
-            .from("complaint_categories")
-            .select("*")
-            .eq("id", c.data.category_id)
-            .eq("institution_id", institutionId)
-            .single()
-        ).data
-      : null;
+    const complaint = c.data as unknown as Complaint & { category: Category | null };
     return {
-      complaint: c.data as unknown as Complaint,
+      complaint,
       comments: (cm.data ?? []) as unknown as Comment[],
-      category: (catData ?? null) as unknown as Category | null,
+      category: complaint.category ?? null,
     };
   },
   ["complaint"],
@@ -64,6 +58,32 @@ function initialsFor(name: string): string {
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase())
     .join("");
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const institution = await requireInstitution();
+  const data = await getData(id, institution.id);
+  if (!data) return { title: "Complaint not found" };
+  const title = data.complaint.title;
+  const description = data.complaint.description?.slice(0, 200) ?? "";
+  return {
+    title: `${title} — REVERB`,
+    description,
+    openGraph: {
+      title: `${title} — REVERB`,
+      description,
+      type: "article",
+      siteName: "REVERB",
+      url: `https://mss-feedback.vercel.app/${institution.slug}/complaints/${id}`,
+      images: [{ url: "https://mss-feedback.vercel.app/opengraph-image", width: 1200, height: 630 }],
+    },
+    twitter: { card: "summary", title: `${title} — REVERB`, description },
+  };
 }
 
 export default async function ComplaintDetailPage({
@@ -146,12 +166,15 @@ export default async function ComplaintDetailPage({
               {complaint.photo_urls.length > 0 && (
                 <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {complaint.photo_urls.map((u) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       key={u}
                       src={u}
                       alt="complaint evidence"
+                      width={800}
+                      height={800}
+                      sizes="(max-width: 640px) 50vw, 33vw"
                       loading="lazy"
+                      quality={80}
                       className="aspect-square w-full rounded-lg object-cover ring-1 ring-border"
                     />
                   ))}
@@ -188,8 +211,9 @@ export default async function ComplaintDetailPage({
           </div>
         </div>
 
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap items-center gap-2">
           <WhatsAppShare title={complaint.title} />
+          <ReportButton complaintId={id} />
         </div>
       </main>
     </div>

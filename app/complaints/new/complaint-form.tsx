@@ -97,7 +97,7 @@ export default function ComplaintForm({
       const uploadFile = blob === file ? file : new File([blob], path, { type: "image/jpeg" });
       const { error: upErr } = await supabase.storage
         .from("complaint-photos")
-        .upload(path, uploadFile);
+        .upload(path, uploadFile, { cacheControl: "31536000" });
       if (upErr) {
         setError(`Photo upload failed: ${upErr.message}`);
         setSaving(false);

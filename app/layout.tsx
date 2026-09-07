@@ -3,9 +3,28 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "REVERB — Louder together",
+  metadataBase: new URL("https://mss-feedback.vercel.app"),
+  title: {
+    default: "REVERB — Louder together",
+    template: "%s — REVERB",
+  },
   description:
     "The campus complaint wall. Post anonymously, upvote what matters, and make your college listen.",
+  openGraph: {
+    title: "REVERB — Louder together",
+    description:
+      "The campus complaint wall. Post anonymously, upvote what matters, and make your college listen.",
+    type: "website",
+    siteName: "REVERB",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "REVERB — Louder together",
+    description:
+      "The campus complaint wall. Post anonymously, upvote what matters, and make your college listen.",
+    images: ["/opengraph-image"],
+  },
 };
 
 export const viewport: Viewport = {

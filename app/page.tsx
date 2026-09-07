@@ -4,6 +4,7 @@ import { Inbox } from "lucide-react";
 import { INST_HEADER } from "@/proxy";
 import { getInstitutionBySlug, listInstitutions } from "@/lib/institution";
 import { getCollegeBoard, getGlobalFeed, sortComplaints, type FeedSort } from "@/lib/feed";
+import { createClient as createSessionClient } from "@/lib/supabase/server";
 import type { Institution } from "@/lib/institution";
 import NavBar from "@/components/NavBar";
 import CollegeSwitcher from "@/components/CollegeSwitcher";
@@ -102,6 +103,20 @@ async function GlobalFeedPage({
   const sort = parseSort(sortParam);
   const list = sortComplaints(items, sort);
 
+  const session = await createSessionClient();
+  const {
+    data: { user },
+  } = await session.auth.getUser();
+  let needsCampus = false;
+  if (user) {
+    const { data: prof } = await session
+      .from("profiles")
+      .select("institution_id")
+      .eq("id", user.id)
+      .maybeSingle();
+    needsCampus = !!prof && !prof.institution_id;
+  }
+
   return (
     <div>
       <NavBar />
@@ -123,6 +138,31 @@ async function GlobalFeedPage({
             </div>
           </div>
           <TrendingBar institutions={institutions} />
+
+          {needsCampus && (
+            <div className="mt-4 rounded-xl border border-dashed border-border bg-surface p-3.5">
+              <p className="text-[13px] font-semibold">
+                You haven&apos;t joined a campus yet.
+              </p>
+              <p className="mt-0.5 text-xs text-muted">
+                Pick your college to land on its board next time:
+              </p>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {institutions.slice(0, 4).map((i) => (
+                  <a
+                    key={i.slug}
+                    href={`/${i.slug}`}
+                    className="tap inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface2 px-2.5 py-1.5 text-xs font-medium text-muted transition hover:border-accent hover:text-accent-ink"
+                  >
+                    <span className="flex h-4 w-4 items-center justify-center rounded-[4px] bg-accent text-[8px] font-bold text-white">
+                      {initialsFor(i.name)}
+                    </span>
+                    {i.name}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </header>
 
         <FeedSection

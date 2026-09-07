@@ -5,7 +5,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getSuperAdmin } from "@/lib/admin-guard";
 
 async function superCtx() {
-  await getSuperAdmin();
+  const g = await getSuperAdmin();
+  // The QA bypass lets the /admin page render without a session, but mutations
+  // must never run under it — only the actual creator cookie can write.
+  if (!g.isCreator) throw new Error("Only the creator can run admin actions");
   return createAdminClient();
 }
 
@@ -93,5 +96,24 @@ export async function deleteCategory(institutionId: string, id: string) {
     .delete()
     .eq("institution_id", institutionId)
     .eq("id", id);
+  revalidatePath("/admin");
+}
+
+// ---------- Moderation (flags) ----------
+
+/** hide = remove from every public feed/detail; restore = un-hide. */
+export async function setComplaintHidden(id: string, hide: boolean) {
+  const db = await superCtx();
+  await db.from("complaints").update({ is_flagged: hide }).eq("id", id);
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
+export async function clearFlags(complaintId: string) {
+  const db = await superCtx();
+  await db
+    .from("complaint_flags")
+    .delete()
+    .eq("complaint_id", complaintId);
   revalidatePath("/admin");
 }

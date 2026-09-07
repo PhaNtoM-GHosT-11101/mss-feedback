@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { KeyboardEvent, MouseEvent } from "react";
 import {
@@ -10,6 +11,7 @@ import {
 } from "@/components/icons";
 import SaveButton from "./SaveButton";
 import ShareMenu from "./ShareMenu";
+import ReportButton from "./ReportButton";
 import { timeAgo } from "@/lib/format";
 import type { FeedItem } from "@/lib/feed";
 
@@ -57,19 +59,19 @@ export default function FeedCard({ item }: { item: FeedItem }) {
 
   return (
     <article
-      role="link"
       tabIndex={0}
       onClick={onClick}
       onKeyDown={onKey}
+      aria-label={`${item.title} — open complaint`}
       className="group flex cursor-pointer items-stretch gap-2 px-1 py-4 outline-none transition hover:bg-surface2/60 focus-visible:rounded-lg sm:gap-3"
     >
       {/* Vote rail */}
       <div className="hidden w-12 shrink-0 flex-col items-center gap-1 self-start border-l-2 border-transparent py-0.5 transition group-hover:border-accent sm:flex">
-        <IconArrowUp className="h-4 w-4 text-zinc-400 transition group-hover:text-accent dark:text-zinc-500" />
+        <IconArrowUp className="h-4 w-4 text-muted transition group-hover:text-accent-ink" />
         <span className="mt-0.5 text-[15px] font-bold leading-none tabular-nums text-foreground">
           {item.upvote_count}
         </span>
-        <span className="mt-1 text-[9px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+        <span className="mt-1 text-[9px] font-semibold uppercase tracking-widest text-muted">
           votes
         </span>
       </div>
@@ -127,11 +129,13 @@ export default function FeedCard({ item }: { item: FeedItem }) {
             {photos.length > 0 && (
               <span className="flex items-center gap-1.5">
                 {photos.slice(0, 3).map((p) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     key={p}
                     src={p}
                     alt=""
+                    width={96}
+                    height={96}
+                    sizes="40px"
                     loading="lazy"
                     className="h-10 w-10 rounded-md border border-border object-cover"
                   />
@@ -154,14 +158,16 @@ export default function FeedCard({ item }: { item: FeedItem }) {
 
           <button
             type="button"
+            onClick={open}
             className="tap inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium sm:hidden"
+            aria-label={`${item.upvote_count} votes — open complaint`}
           >
             <IconArrowUp className="h-[15px] w-[15px]" />
             {item.upvote_count}
           </button>
 
           <SaveAction complaintId={item.id} />
-          <ShareAction href={href} title={item.title} />
+          <SharedActions complaintId={item.id} href={href} title={item.title} />
         </div>
       </div>
     </article>
@@ -176,10 +182,23 @@ function SaveAction({ complaintId }: { complaintId: string }) {
   );
 }
 
-function ShareAction({ href, title }: { href: string; title: string }) {
+function SharedActions({
+  complaintId,
+  href,
+  title,
+}: {
+  complaintId: string;
+  href: string;
+  title: string;
+}) {
   return (
-    <span onClick={(e) => e.stopPropagation()}>
-      <ShareMenu href={href} title={title} />
-    </span>
+    <>
+      <span onClick={(e) => e.stopPropagation()}>
+        <ShareMenu href={href} title={title} />
+      </span>
+      <span onClick={(e) => e.stopPropagation()}>
+        <ReportButton complaintId={complaintId} />
+      </span>
+    </>
   );
 }

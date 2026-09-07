@@ -22,15 +22,17 @@ const RESERVED = new Set([
   "icon",
   "apple-icon",
   "manifest",
+  "opengraph-image",
+  "twitter-image",
   "robots.txt",
   "sitemap.xml",
 ]);
 
 // Feature routes removed from the app — send visitors home instead of 404.
-const LEGACY = new Set(["mess", "praise", "stats", "onboard"]);
+const LEGACY = new Set(["mess", "praise", "stats", "onboard", "playground"]);
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const PUBLIC_PATHS = ["/login", "/auth/callback", "/auth/token", "/playground"];
+const PUBLIC_PATHS = ["/login", "/auth/callback", "/auth/token"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -50,6 +52,10 @@ export async function proxy(request: NextRequest) {
 
   // --- Path carries an institution slug: reading is open to everyone. --------
   if (slug) {
+    // The board's bare /complaints list redirects home (no such listing exists).
+    if (stripped === "/complaints") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
     // Removed feature pages (e.g. /nit-agartala/mess) bounce to the board.
     const strippedFirst = stripped.split("/").filter(Boolean)[0] ?? "";
     if (LEGACY.has(strippedFirst)) {
@@ -90,6 +96,12 @@ export async function proxy(request: NextRequest) {
     }
     return nextResponse;
   };
+
+  // The bare /complaints listing redirects to home. Streamed (loading) renders
+  // defer the page-level redirect(), so assert it at the edge for a clean 307.
+  if (pathname === "/complaints") {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
 
   // Home is the global "all boards" feed — no college context needed.
   if (pathname === "/") {

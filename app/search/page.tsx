@@ -3,7 +3,7 @@ import FeedCard from "@/components/FeedCard";
 import { IconSearch } from "@/components/icons";
 import { searchComplaints } from "@/lib/feed";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 export default async function SearchPage({
   searchParams,

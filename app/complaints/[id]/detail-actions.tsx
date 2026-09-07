@@ -70,12 +70,16 @@ export function VoteBar({
       if (!error) {
         setUpvoted(false);
         setCount((n) => Math.max(n - 1, 0));
+      } else {
+        setError(error.message);
       }
     } else {
       const { error } = await supabase.from("complaint_upvotes").insert({ complaint_id: complaintId, user_id: myId });
       if (!error) {
         setUpvoted(true);
         setCount((n) => n + 1);
+      } else {
+        setError(error.message);
       }
     }
   }
@@ -242,7 +246,7 @@ function CommentThread({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-[12.5px]">
             <span className="font-semibold text-foreground">{name}</span>
-            <span className="text-zinc-400 dark:text-zinc-500">{timeAgo(c.created_at)}</span>
+            <span className="text-muted">{timeAgo(c.created_at)}</span>
           </div>
           <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-200">
             {c.body}

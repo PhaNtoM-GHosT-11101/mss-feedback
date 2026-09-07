@@ -12,37 +12,3 @@ export function timeAgo(iso: string): string {
     month: "short",
   });
 }
-
-export function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("en-IN", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-}
-
-export function statusLabel(status: string): string {
-  switch (status) {
-    case "new":
-      return "New";
-    case "in_progress":
-      return "In review";
-    case "resolved":
-      return "Resolved";
-    default:
-      return status;
-  }
-}
-
-export function statusColor(status: string): string {
-  switch (status) {
-    case "new":
-      return "badge badge-new";
-    case "in_progress":
-      return "badge badge-in_progress";
-    case "resolved":
-      return "badge badge-resolved";
-    default:
-      return "badge bg-gray-100 text-gray-700";
-  }
-}

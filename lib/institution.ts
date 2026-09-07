@@ -139,6 +139,8 @@ const RESERVED_HAS = (s: string) =>
     "auth",
     "playground",
     "_next",
+    "opengraph-image",
+    "twitter-image",
   ].includes(s);
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

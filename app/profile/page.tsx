@@ -222,7 +222,7 @@ export default async function ProfilePage() {
               <div className="min-w-0 flex-1 py-3 pl-3.5 pr-3">
                 <p className="truncate text-[14px] font-semibold text-foreground">{cc.title}</p>
                 <p className="mt-1 flex items-center gap-1 text-[12.5px] text-muted">
-                  <IconArrowUp className="h-3 w-3 text-zinc-400" /> {cc.upvote_count} · {timeAgo(cc.created_at)}
+                  <IconArrowUp className="h-3 w-3 text-muted" /> {cc.upvote_count} · {timeAgo(cc.created_at)}
                 </p>
               </div>
             </a>
@@ -243,12 +243,12 @@ export default async function ProfilePage() {
               className="card card-hover flex items-stretch overflow-hidden"
             >
               <div className="hidden w-10 shrink-0 items-center justify-center border-r border-border/60 bg-surface2/50 sm:flex">
-                <IconArrowUp className="h-4 w-4 text-zinc-400" />
+                <IconArrowUp className="h-4 w-4 text-muted" />
               </div>
               <div className="min-w-0 flex-1 py-3 pl-3.5 pr-3">
                 <p className="truncate text-[14px] font-semibold text-foreground">{cc.title}</p>
                 <p className="mt-1 flex items-center gap-1 text-[12.5px] text-muted">
-                  <IconArrowUp className="h-3 w-3 text-zinc-400" /> {cc.upvote_count} · {timeAgo(cc.created_at)}
+                  <IconArrowUp className="h-3 w-3 text-muted" /> {cc.upvote_count} · {timeAgo(cc.created_at)}
                 </p>
               </div>
             </a>
