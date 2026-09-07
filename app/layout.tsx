@@ -5,22 +5,22 @@ import { ThemeProvider } from "@/components/theme-provider";
 export const metadata: Metadata = {
   metadataBase: new URL("https://mss-feedback.vercel.app"),
   title: {
-    default: "REVERB — Louder together",
-    template: "%s — REVERB",
+    default: "Loud and sound — Louder together",
+    template: "%s — Loud and sound",
   },
   description:
     "The campus complaint wall. Post anonymously, upvote what matters, and make your college listen.",
   openGraph: {
-    title: "REVERB — Louder together",
+    title: "Loud and sound — Louder together",
     description:
       "The campus complaint wall. Post anonymously, upvote what matters, and make your college listen.",
     type: "website",
-    siteName: "REVERB",
+    siteName: "Loud and sound",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "REVERB — Louder together",
+    title: "Loud and sound — Louder together",
     description:
       "The campus complaint wall. Post anonymously, upvote what matters, and make your college listen.",
     images: ["/opengraph-image"],

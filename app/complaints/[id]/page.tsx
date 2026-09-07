@@ -72,17 +72,17 @@ export async function generateMetadata({
   const title = data.complaint.title;
   const description = data.complaint.description?.slice(0, 200) ?? "";
   return {
-    title: `${title} — REVERB`,
+    title: `${title} — Loud and sound`,
     description,
     openGraph: {
-      title: `${title} — REVERB`,
+      title: `${title} — Loud and sound`,
       description,
       type: "article",
-      siteName: "REVERB",
+      siteName: "Loud and sound",
       url: `https://mss-feedback.vercel.app/${institution.slug}/complaints/${id}`,
       images: [{ url: "https://mss-feedback.vercel.app/opengraph-image", width: 1200, height: 630 }],
     },
-    twitter: { card: "summary", title: `${title} — REVERB`, description },
+    twitter: { card: "summary", title: `${title} — Loud and sound`, description },
   };
 }
 

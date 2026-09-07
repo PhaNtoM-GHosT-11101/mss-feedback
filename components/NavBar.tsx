@@ -98,7 +98,7 @@ export default function NavBar({
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-4 md:gap-5">
           {/* Full document navigation — board pages live server-side behind a rewrite */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a href="/" className="inline-block" aria-label="REVERB home">
+          <a href="/" className="inline-block" aria-label="Loud and sound home">
             {onBoards ? (
               <>
                 <span className="hidden sm:block">

@@ -25,7 +25,7 @@ export default async function SearchPage({
               name="q"
               defaultValue={query}
               autoFocus
-              placeholder="Search every complaint on REVERB…"
+              placeholder="Search every complaint on Loud and sound…"
               aria-label="Search complaints"
               className="input h-12 w-full bg-card pl-10 text-[15px] shadow-sm"
             />

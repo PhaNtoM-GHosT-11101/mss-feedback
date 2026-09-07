@@ -1,4 +1,4 @@
-// REVERB — code-drawn abstract monogram.
+// Loud and sound — code-drawn abstract monogram.
 // Sound-bars fanning forward + an echo arc: "louder together." Sharp, geometric.
 
 export function ReverbMark({
@@ -47,7 +47,7 @@ export function ReverbLogo({
       {!compact && (
         <span className="flex flex-col leading-none">
           <span className="font-display text-[16px] font-extrabold tracking-[-0.02em] text-foreground">
-            REVERB
+            Loud and sound
           </span>
           <span className="mt-0.5 text-[10.5px] font-medium text-muted">
             {tagline || (institutionName ? `${institutionName} · Louder together` : "Louder together")}
@@ -56,7 +56,7 @@ export function ReverbLogo({
       )}
       {compact && (
         <span className="font-display text-[14px] font-extrabold tracking-[-0.02em] text-foreground">
-          REVERB
+          Loud and sound
         </span>
       )}
     </span>

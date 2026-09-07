@@ -42,10 +42,10 @@ export default function OpengraphImage() {
               color: "#fff",
             }}
           >
-            R
+            L
           </div>
-          <div style={{ fontSize: 72, fontWeight: 900, letterSpacing: -2 }}>
-            REVERB
+          <div style={{ fontSize: 60, fontWeight: 900, letterSpacing: -1.5 }}>
+            Loud and sound
           </div>
         </div>
         <div
