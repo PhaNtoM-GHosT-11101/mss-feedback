@@ -29,7 +29,7 @@ export default function ComplaintForm({
   const [mealSession, setMealSession] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [anonymous, setAnonymous] = useState(false);
+  const [anonymous, setAnonymous] = useState(true);
   const [photos, setPhotos] = useState<File[]>([]);
   const [leftToday, setLeftToday] = useState<number | null>(null);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -141,9 +141,9 @@ export default function ComplaintForm({
   }
 
   return (
-    <div className="md:ml-60">
+    <div>
       <NavBar />
-      <main className="mx-auto max-w-2xl px-4 pb-10 pt-4">
+      <main className="mx-auto max-w-2xl px-4 pb-16 pt-2">
         <button
           onClick={() => router.back()}
           className="tap mb-3 inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[13px] font-medium text-zinc-500 transition hover:bg-surface2 hover:text-foreground dark:text-zinc-400"
@@ -168,7 +168,7 @@ export default function ComplaintForm({
             href="/login"
             className="mt-4 block rounded-xl border border-dashed border-border p-3.5 text-center text-[13px] font-medium text-muted transition hover:border-accent hover:text-foreground"
           >
-            You&apos;re browsing without an account. Sign in to name your complaint.
+            You&apos;re browsing without an account. Sign in to post — anonymous is the default.
           </a>
         )}
 

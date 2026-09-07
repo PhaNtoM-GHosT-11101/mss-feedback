@@ -3,9 +3,9 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "Campus Feedback",
+  title: "REVERB — Louder together",
   description:
-    "A public suggestion box for every college — file a complaint, get upvotes, and let the campus see what matters.",
+    "The campus complaint wall. Post anonymously, upvote what matters, and make your college listen.",
 };
 
 export const viewport: Viewport = {

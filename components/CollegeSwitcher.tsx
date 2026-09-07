@@ -24,6 +24,7 @@ export default function CollegeSwitcher({
   label?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
   const activeBoard = institutions.find((i) => i.slug === current);
   const triggerLabel = activeBoard ? activeBoard.name : "All boards";
@@ -46,13 +47,17 @@ export default function CollegeSwitcher({
     };
   }, [open]);
 
+  const q = query.trim().toLowerCase();
   const menuItems = [
     {
       slug: null as string | null,
       name: "All boards",
+      match: "all boards" === q,
     },
-    ...institutions.map((i) => ({ slug: i.slug, name: i.name })),
-  ];
+    ...institutions
+      .filter((i) => !q || i.name.toLowerCase().includes(q))
+      .map((i) => ({ slug: i.slug, name: i.name, match: true })),
+  ].filter((i) => i.match || q === "");
 
   return (
     <div ref={rootRef} className="relative inline-block text-left">
@@ -60,7 +65,10 @@ export default function CollegeSwitcher({
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setQuery("");
+          setOpen((v) => !v);
+        }}
         className="tap inline-flex h-9 max-w-[240px] items-center gap-2 rounded-full border border-border bg-surface py-0 pl-3.5 pr-2.5 text-sm font-medium text-foreground outline-none transition hover:border-zinc-400 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/20"
       >
         <span className="min-w-0 truncate">
@@ -75,7 +83,16 @@ export default function CollegeSwitcher({
 
       {open && (
         <div className="card anim-scale-in absolute right-0 z-50 mt-2 w-72 origin-top-right overflow-hidden p-1.5 shadow-xl shadow-black/10">
-          <div className="max-h-[340px] overflow-y-auto">
+          <div className="mb-1 p-1">
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search colleges…"
+              className="input h-8 py-0 pl-3 pr-3 text-[13px]"
+            />
+          </div>
+          <div className="max-h-[300px] overflow-y-auto">
             {menuItems.map((item) => {
               const active = item.slug ? item.slug === current : !current;
               const href = item.slug ? `/${item.slug}` : "/";
@@ -112,6 +129,11 @@ export default function CollegeSwitcher({
                 </a>
               );
             })}
+            {menuItems.length === 0 && (
+              <p className="px-2.5 py-3 text-center text-[12.5px] text-muted">
+                No colleges found
+              </p>
+            )}
           </div>
           <div className="mt-1 border-t border-border/70 pt-1.5 text-center text-[10.5px] font-medium text-muted">
             {institutions.length} college boards

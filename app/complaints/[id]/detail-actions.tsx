@@ -1,20 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { revalidateComplaint } from "./actions";
-import { ArrowUp, Trash2 } from "lucide-react";
+import { ArrowUp, Trash2, MessageSquarePlus } from "lucide-react";
 import { IconWhatsApp } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
+import { timeAgo } from "@/lib/format";
+import type { Comment } from "@/lib/types";
 
 export function WhatsAppShare({ title }: { title: string }) {
   return (
     <button
       onClick={() => {
-        const text = encodeURIComponent(`Campus Feedback — ${title}:\n${window.location.href}`);
+        const text = encodeURIComponent(`REVERB — ${title}:\n${window.location.href}`);
         window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
       }}
-      className="tap inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-surface2"
+      className="tap inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-surface2"
     >
       <IconWhatsApp className="h-3.5 w-3.5 text-[#25D366]" /> Share
     </button>
@@ -92,49 +94,58 @@ export function VoteBar({
   }
 
   return (
-    <div className="mt-4 border-t border-border pt-3">
-      <div className="flex items-center gap-2">
+    <div className="mt-5 flex items-center gap-2">
+      <button
+        onClick={toggleUpvote}
+        disabled={!myId}
+        className={`tap inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-sm font-bold tabular-nums transition ${
+          upvoted
+            ? "border-accent bg-accent text-white shadow-[0_2px_10px_-3px_rgb(79_70_229/0.6)]"
+            : "border-border bg-surface text-zinc-600 hover:border-accent dark:text-zinc-200"
+        } ${!myId ? "opacity-50" : ""}`}
+        title={myId ? "Vote" : "Sign in to vote"}
+      >
+        <ArrowUp className={`h-4 w-4 ${upvoted ? "text-white" : ""}`} />
+        {count}
+      </button>
+      {isOwner && canDelete && (
         <button
-          onClick={toggleUpvote}
-          disabled={!myId}
-          className={`tap inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-bold tabular-nums transition ${
-            upvoted
-              ? "border-accent bg-accent text-white shadow-[0_2px_8px_-3px_rgb(255_69_0/0.5)]"
-              : "border-border bg-surface text-zinc-600 hover:border-zinc-400 dark:text-zinc-200"
-          } ${!myId ? "opacity-50" : ""}`}
-          title={myId ? "Vote" : "Sign in to vote"}
+          onClick={deleteComplaint}
+          className="tap inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-red-500 transition hover:bg-red-500/10 dark:text-red-400"
         >
-          <ArrowUp className={`h-4 w-4 ${upvoted ? "text-white" : ""}`} />
-          {count}
+          <Trash2 className="h-3.5 w-3.5" /> Delete
         </button>
-        {isOwner && canDelete && (
-          <button
-            onClick={deleteComplaint}
-            className="tap inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition hover:bg-red-500/10 dark:text-red-400"
-          >
-            <Trash2 className="h-3.5 w-3.5" /> Delete
-          </button>
-        )}
-        {!myId && (
-          <a
-            href="/login"
-            className="ml-auto hidden text-xs font-medium text-muted transition hover:text-foreground sm:block"
-          >
-            Sign in to vote or comment
-          </a>
-        )}
-      </div>
-      {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
+      )}
+      {!myId && (
+        <a
+          href="/login"
+          className="ml-auto hidden text-xs font-medium text-muted transition hover:text-foreground sm:block"
+        >
+          Sign in to vote or comment
+        </a>
+      )}
+      {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );
 }
 
-export function CommentForm({ complaintId }: { complaintId: string }) {
+export function CommentForm({
+  complaintId,
+  parentId,
+  placeholder = "Add a comment…",
+  onPosted,
+  autoFocus,
+}: {
+  complaintId: string;
+  parentId?: string;
+  placeholder?: string;
+  onPosted?: () => void;
+  autoFocus?: boolean;
+}) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [myId, setMyId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [posted, setPosted] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -148,29 +159,30 @@ export function CommentForm({ complaintId }: { complaintId: string }) {
     const optimistic = text.trim();
     setBusy(true);
     setFailed(false);
-    setPosted(optimistic);
     setText("");
     const supabase = createClient();
-    const { error } = await supabase
-      .from("complaint_comments")
-      .insert({ complaint_id: complaintId, user_id: myId, body: optimistic });
+    const { error } = await supabase.from("complaint_comments").insert({
+      complaint_id: complaintId,
+      user_id: myId,
+      body: optimistic,
+      ...(parentId ? { parent_id: parentId } : {}),
+    });
     setBusy(false);
     if (error) {
       setFailed(true);
       setText(optimistic);
-      setTimeout(() => setPosted(null), 60);
       return;
     }
-    setPosted(null);
     await revalidateComplaint();
     router.refresh();
+    onPosted?.();
   }
 
   if (!myId) {
     return (
       <a
         href="/login"
-        className="block rounded-xl border border-dashed border-border p-4 text-center text-[13px] font-medium text-muted transition hover:border-accent hover:text-foreground"
+        className="block rounded-lg border border-dashed border-border p-4 text-center text-[13px] font-medium text-muted transition hover:border-accent hover:text-foreground"
       >
         Sign in to join the conversation
       </a>
@@ -184,7 +196,8 @@ export function CommentForm({ complaintId }: { complaintId: string }) {
           value={text}
           onChange={(e) => setText(e.target.value.slice(0, 500))}
           onKeyDown={(e) => e.key === "Enter" && post()}
-          placeholder="Add a comment…"
+          placeholder={placeholder}
+          autoFocus={autoFocus}
           className="input flex-1"
         />
         <button
@@ -195,13 +208,99 @@ export function CommentForm({ complaintId }: { complaintId: string }) {
           {busy ? "Posting…" : "Post"}
         </button>
       </div>
-      {posted && !failed && (
-        <div className="card mt-2 p-3 text-sm opacity-90">
-          <p>{posted}</p>
-          <p className="mt-1 text-xs text-muted">You · just now</p>
-        </div>
-      )}
       {failed && <p className="mt-2 text-xs text-red-500">Comment not posted. Please try again.</p>}
     </div>
   );
+}
+
+function initialsFor(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("");
+}
+
+function CommentThread({
+  c,
+  children,
+  maxDepth,
+}: {
+  c: Comment;
+  children?: ReactNode;
+  maxDepth: number;
+}) {
+  const [replying, setReplying] = useState(false);
+  const name = c.comment_author ?? "Unknown";
+  return (
+    <div>
+      <div className="flex items-start gap-2.5 rounded-lg p-2.5 transition hover:bg-surface2/50">
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-[7px] bg-accent-soft text-[10px] font-bold text-accent-ink">
+          {initialsFor(name) || "?"}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 text-[12.5px]">
+            <span className="font-semibold text-foreground">{name}</span>
+            <span className="text-zinc-400 dark:text-zinc-500">{timeAgo(c.created_at)}</span>
+          </div>
+          <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-200">
+            {c.body}
+          </p>
+          <button
+            type="button"
+            onClick={() => setReplying((v) => !v)}
+            className="tap mt-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11.5px] font-semibold text-muted transition hover:bg-surface2 hover:text-accent-ink"
+          >
+            <MessageSquarePlus className="h-3.5 w-3.5" />
+            Reply
+          </button>
+          {replying && (
+            <div className="mt-2">
+              <CommentForm
+                complaintId={c.complaint_id}
+                parentId={c.id}
+                placeholder={`Reply to ${name}…`}
+                autoFocus
+                onPosted={() => setReplying(false)}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+      {children && (
+        <div
+          className={
+            maxDepth < 4
+              ? "ml-4 mt-1 border-l border-border/70 pl-3 sm:ml-6"
+              : "mt-1"
+          }
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function ThreadedComments({ comments }: { comments: Comment[] }) {
+  const childrenOf = useMemo(() => {
+    const map = new Map<string | null, Comment[]>();
+    for (const c of comments) {
+      const pid = c.parent_id ?? null;
+      const arr = map.get(pid) ?? [];
+      arr.push(c);
+      map.set(pid, arr);
+    }
+    return map;
+  }, [comments]);
+
+  const render = (parentId: null | string, depth: number): ReactNode =>
+    (childrenOf.get(parentId) ?? []).map((c) => (
+      <CommentThread key={c.id} c={c} maxDepth={depth}>
+        {render(c.id, depth + 1)}
+      </CommentThread>
+    ));
+
+  return <div>{render(null, 0)}</div>;
 }

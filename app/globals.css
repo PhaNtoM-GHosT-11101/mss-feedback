@@ -1,49 +1,50 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/manrope";
 
 /* ============================================================
-   Campus Feedback — design v3 (Reddit identity)
-   Signature: #FF4500 orange on clean neutral surfaces.
-   Light: paper-gray page, white cards. Dark: Reddit #1A1A1B.
-   One uniform accent, Inter everywhere, crisp flat cards.
+   REVERB — design system (indigo editorial)
+   Signature: deep indigo on cool near-black/paper surfaces.
+   Sharp corners, hairline dividers, geometric Manrope display.
+   Premium-minimal, inspired by Linear + Reddit density.
    ============================================================ */
 
 :root {
-  --background: #F7F7F8;
-  --foreground: #1A1A1D;
+  --background: #F6F6F9;
+  --foreground: #16161D;
   --surface: #FFFFFF;
-  --surface-2: #F2F3F5;
-  --border: #E6E8EB;
-  --muted: #7A7A82;
+  --surface-2: #F1F1F6;
+  --border: #E5E5EE;
+  --muted: #6D6D7B;
 
-  --accent: #FF4500;
-  --accent-strong: #CC3700;
-  --accent-soft: #FFE9E0;
-  --accent-ink: #A32A00;
+  --accent: #4F46E5;
+  --accent-strong: #4338CA;
+  --accent-soft: #EDEFFF;
+  --accent-ink: #3B2FD8;
 
-  --sage: #21823C;
-  --sage-soft: #E8F4EB;
-  --plum: #7E50A6;
-  --plum-soft: #F3EDF8;
+  --sage: #1E8A4F;
+  --sage-soft: #E7F5EC;
+  --plum: #7C5CBF;
+  --plum-soft: #F2EDFA;
 }
 
 :root[data-theme="dark"] {
-  --background: #1A1A1B;
-  --foreground: #D7DADC;
-  --surface: #242426;
-  --surface-2: #2E2E31;
-  --border: #343438;
-  --muted: #81838B;
+  --background: #0D0E15;
+  --foreground: #E9E9F1;
+  --surface: #151621;
+  --surface-2: #1C1D2B;
+  --border: #262739;
+  --muted: #8C8C9E;
 
-  --accent: #FF4500;
-  --accent-strong: #FF6A33;
-  --accent-soft: #3C1F18;
-  --accent-ink: #FF8A63;
+  --accent: #7679FF;
+  --accent-strong: #9093FF;
+  --accent-soft: #1C1D35;
+  --accent-ink: #A6A9FF;
 
-  --sage: #46C26B;
-  --sage-soft: #18301F;
-  --plum: #B28DD3;
-  --plum-soft: #2C2140;
+  --sage: #3EC47C;
+  --sage-soft: #12301E;
+  --plum: #AC8BDB;
+  --plum-soft: #241D38;
 }
 
 @theme inline {
@@ -62,7 +63,7 @@
   --color-plum: var(--plum);
   --color-plum-soft: var(--plum-soft);
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Manrope Variable", var(--font-sans);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -75,7 +76,9 @@ html {
 
 body {
   background-color: var(--background);
-  background-image: radial-gradient(70rem 26rem at 50% -12rem, rgb(255 69 0 / 0.055), transparent 62%);
+  background-image:
+    radial-gradient(56rem 22rem at 50% -12rem, rgb(79 70 229 / 0.07), transparent 62%),
+    radial-gradient(30rem 18rem at 92% -6rem, rgb(79 70 229 / 0.04), transparent 60%);
   background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans);
@@ -88,7 +91,9 @@ body {
 }
 
 :root[data-theme="dark"] body {
-  background-image: radial-gradient(70rem 26rem at 50% -12rem, rgb(255 69 0 / 0.09), transparent 62%);
+  background-image:
+    radial-gradient(56rem 22rem at 50% -12rem, rgb(118 121 255 / 0.12), transparent 62%),
+    radial-gradient(30rem 18rem at 92% -6rem, rgb(118 121 255 / 0.06), transparent 60%);
 }
 
 button,
@@ -99,7 +104,7 @@ a,
 }
 
 ::selection {
-  background: rgb(255 69 0 / 0.28);
+  background: rgb(79 70 229 / 0.24);
 }
 
 ::-webkit-scrollbar {
@@ -108,10 +113,10 @@ a,
 }
 ::-webkit-scrollbar-thumb {
   border-radius: 9999px;
-  background: rgb(122 122 130 / 0.35);
+  background: rgb(109 109 123 / 0.35);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(122 122 130 / 0.6);
+  background: rgb(109 109 123 / 0.6);
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -160,14 +165,15 @@ a,
   from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
 }
-@keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
 
 .anim-fade-up { animation: fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .anim-fade-in { animation: fade-in 0.25s ease both; }
 .anim-scale-in { animation: scale-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.pulse-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
 
 .skeleton {
   border-radius: 0.75rem;
@@ -177,11 +183,16 @@ a,
 }
 
 /* ============================================================
-   Core components — Reddit-clean
+   Core components — indigo editorial
+   Sharp corners. Hairlines. Quiet surfaces.
    ============================================================ */
 
+.hairline {
+  border-bottom: 1px solid var(--border);
+}
+
 .card {
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   border: 1px solid var(--border);
   background: var(--surface);
   transition: border-color 150ms ease, box-shadow 150ms ease;
@@ -190,17 +201,17 @@ a,
   transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
 }
 .card-hover:hover {
-  border-color: rgb(122 122 130 / 0.45);
+  border-color: rgb(79 70 229 / 0.35);
   background: var(--surface);
-  box-shadow: 0 6px 20px -8px rgb(0 0 0 / 0.1);
+  box-shadow: 0 10px 30px -16px rgb(79 70 229 / 0.28);
 }
 :root[data-theme="dark"] .card-hover:hover {
-  border-color: rgb(255 255 255 / 0.2);
-  box-shadow: 0 6px 20px -8px rgb(0 0 0 / 0.5);
+  border-color: rgb(118 121 255 / 0.35);
+  box-shadow: 0 10px 30px -16px rgb(0 0 0 / 0.6);
 }
 
 .btn {
-  border-radius: 9999px;
+  border-radius: 0.625rem;
   font-weight: 600;
   font-size: 0.875rem;
   padding: 0.625rem 1.125rem;
@@ -219,11 +230,11 @@ a,
   background: var(--accent);
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 2px 10px -4px rgb(255 69 0 / 0.55);
+  box-shadow: 0 3px 12px -5px rgb(79 70 229 / 0.6);
 }
 .btn-primary:hover {
   background: var(--accent-strong);
-  box-shadow: 0 4px 14px -4px rgb(255 69 0 / 0.6);
+  box-shadow: 0 6px 18px -6px rgb(79 70 229 / 0.65);
 }
 
 .btn-accent {
@@ -240,7 +251,7 @@ a,
 }
 .btn-ghost:hover {
   background: var(--surface-2);
-  border-color: rgb(122 122 130 / 0.5);
+  border-color: rgb(109 109 123 / 0.5);
 }
 
 .btn-danger {
@@ -255,12 +266,13 @@ a,
   background: rgb(248 113 113 / 0.1);
 }
 
-.btn-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; border-radius: 9999px; }
+.btn-sm { padding: 0.4rem 0.75rem; font-size: 0.75rem; border-radius: 0.5rem; }
 
 .section-label {
+  font-family: var(--font-display);
   font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -269,7 +281,7 @@ a,
 select.input,
 textarea.input {
   width: 100%;
-  border-radius: 0.75rem;
+  border-radius: 0.625rem;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--foreground);
@@ -280,14 +292,14 @@ textarea.input {
 }
 .input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgb(255 69 0 / 0.16);
+  box-shadow: 0 0 0 3px rgb(79 70 229 / 0.16);
 }
 .input::placeholder { color: var(--muted); }
 
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.022em;
   color: var(--foreground);
 }
 
@@ -295,8 +307,8 @@ h1, h2, h3, h4 {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  border-radius: 9999px;
-  padding: 0.15rem 0.6rem;
+  border-radius: 0.375rem;
+  padding: 0.14rem 0.5rem;
   font-size: 0.6875rem;
   font-weight: 600;
   line-height: 1.4;
@@ -310,24 +322,41 @@ h1, h2, h3, h4 {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  border-radius: 9999px;
+  border-radius: 0.5rem;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--muted);
-  padding: 0.3rem 0.8rem;
+  padding: 0.28rem 0.8rem;
   font-size: 0.8125rem;
   font-weight: 500;
   transition: all 140ms ease;
   white-space: nowrap;
 }
 .chip:hover {
-  border-color: rgb(122 122 130 / 0.6);
+  border-color: rgb(79 70 229 / 0.5);
   color: var(--foreground);
 }
 .chip-active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: var(--accent-soft);
+  border-color: rgb(79 70 229 / 0.35);
+  color: var(--accent-ink);
   font-weight: 600;
 }
-.chip-active:hover { color: #fff; }
+.chip-active:hover { color: var(--accent-ink); }
+
+/* Editorial sort tabs — hairline underline, active = indigo */
+.sort-tab {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0.5rem 0.125rem 0.625rem;
+  border-bottom: 2px solid transparent;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+.sort-tab:hover { color: var(--foreground); }
+.sort-tab-active {
+  color: var(--accent-ink);
+  border-bottom-color: var(--accent);
+}
+:root[data-theme="dark"] .sort-tab-active { color: var(--accent-strong); }

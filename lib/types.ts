@@ -63,6 +63,7 @@ export type Comment = {
   body: string;
   is_deleted: boolean;
   created_at: string;
+  parent_id?: string | null;
   author_name?: string | null;
   comment_author?: string | null;
 };

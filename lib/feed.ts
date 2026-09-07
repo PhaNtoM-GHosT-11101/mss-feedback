@@ -90,3 +90,16 @@ export async function getCollegeBoard(
     complaints: (complaints?.data ?? []) as unknown as FeedItem[],
   };
 }
+
+export async function searchComplaints(q: string): Promise<FeedItem[]> {
+  const db = createAdminClient();
+  const term = `%${q}%`;
+  const { data } = await db
+    .from("complaints")
+    .select(FEED_SELECT)
+    .or(`title.ilike.${term},description.ilike.${term}`)
+    .eq("is_flagged", false)
+    .order("created_at", { ascending: false })
+    .limit(60);
+  return (data ?? []) as unknown as FeedItem[];
+}

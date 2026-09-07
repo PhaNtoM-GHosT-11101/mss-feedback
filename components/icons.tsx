@@ -3,12 +3,13 @@
 type IconProps = {
   className?: string;
   strokeWidth?: number;
+  fill?: string;
 };
 
 function base(props: IconProps) {
   return {
     viewBox: "0 0 24 24",
-    fill: "none",
+    fill: props.fill ?? "none",
     stroke: "currentColor",
     strokeWidth: props.strokeWidth ?? 1.9,
     strokeLinecap: "round" as const,
@@ -93,6 +94,15 @@ export function IconMoon(p: IconProps) {
     <svg {...base(p)}>
       <path d="M20 13.5A8 8 0 0 1 10.5 4 8 8 0 1 0 20 13.5z" />
       <path d="M15.5 6.5l.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function IconSearch(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="M15.8 15.8 20.5 20.5" />
     </svg>
   );
 }
@@ -229,6 +239,23 @@ export function IconWhatsApp(p: IconProps) {
     <svg {...base(p)}>
       <path d="M12 3.5a8.5 8.5 0 0 0-7.3 12.8L3.5 20.5l4.3-1.1A8.5 8.5 0 1 0 12 3.5z" />
       <path d="M9 8.5c-.4 2.6 2 6.2 6 7l1-1.7-2.2-1.1-.9 1.1c-1.3-.5-2.5-1.7-3-3l1.1-.9-1.1-2.2z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function IconMessageSquare(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <path d="M4.5 5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v9.5a2 2 0 0 1-2 2H9l-4.5 3.5z" />
+      <path d="M8 8.5h8M8 12h5" />
+    </svg>
+  );
+}
+
+export function IconBookmark(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <path d="M6 4.5h12V20l-6-4-6 4z" />
     </svg>
   );
 }

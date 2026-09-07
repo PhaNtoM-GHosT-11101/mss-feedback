@@ -1,6 +1,15 @@
+"use client";
+
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
-import { IconArrowUp, IconPin } from "@/components/icons";
+import { useRouter } from "next/navigation";
+import type { KeyboardEvent, MouseEvent } from "react";
+import {
+  IconArrowUp,
+  IconMessageSquare,
+  IconPin,
+} from "@/components/icons";
+import SaveButton from "./SaveButton";
+import ShareMenu from "./ShareMenu";
 import { timeAgo } from "@/lib/format";
 import type { FeedItem } from "@/lib/feed";
 
@@ -11,84 +20,166 @@ const MEAL_SESSION_LABEL: Record<string, string> = {
   snacks: "Snacks",
 };
 
+function initialsFor(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("");
+}
+
 export default function FeedCard({ item }: { item: FeedItem }) {
+  const router = useRouter();
   const slug = item.institution?.slug;
   const href = slug ? `/${slug}/complaints/${item.id}` : `/complaints/${item.id}`;
   const commentCount = item.comments?.[0]?.count ?? 0;
   const collegeName = item.institution?.name;
   const categoryName = item.category?.name;
   const meal = item.meal_session ? MEAL_SESSION_LABEL[item.meal_session] : null;
-  const hasPhotos = !!item.photo_urls && item.photo_urls.length > 0;
+  const photos = item.photo_urls ?? [];
   const isMess = !!item.category?.is_mess;
 
+  const open = () => router.push(href);
+
+  const onClick = (e: MouseEvent<HTMLElement>) => {
+    if ((e.target as HTMLElement).closest("a, button")) return;
+    open();
+  };
+  const onKey = (e: KeyboardEvent<HTMLElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      open();
+    }
+  };
+
+  const metaItem = "text-[12.5px] text-muted";
+
   return (
-    <Link
-      href={href}
-      className="card card-hover group flex items-stretch overflow-hidden"
+    <article
+      role="link"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={onKey}
+      className="group flex cursor-pointer items-stretch gap-2 px-1 py-4 outline-none transition hover:bg-surface2/60 focus-visible:rounded-lg sm:gap-3"
     >
-      {/* Vote rail (Reddit-style, desktop) */}
-      <div className="hidden w-12 shrink-0 flex-col items-center gap-0.5 self-stretch border-r border-border/60 bg-transparent py-2.5 transition-colors duration-150 group-hover:bg-surface2/50 sm:flex">
-        <IconArrowUp className="h-4 w-4 text-zinc-400 transition group-hover:text-accent" />
-        <span className="mt-0.5 text-[15px] font-bold leading-none tabular-nums text-zinc-700 dark:text-zinc-200">
+      {/* Vote rail */}
+      <div className="hidden w-12 shrink-0 flex-col items-center gap-1 self-start border-l-2 border-transparent py-0.5 transition group-hover:border-accent sm:flex">
+        <IconArrowUp className="h-4 w-4 text-zinc-400 transition group-hover:text-accent dark:text-zinc-500" />
+        <span className="mt-0.5 text-[15px] font-bold leading-none tabular-nums text-foreground">
           {item.upvote_count}
         </span>
-        <span className="mt-1 text-[9px] font-semibold uppercase tracking-widest text-zinc-300 dark:text-zinc-600">
+        <span className="mt-1 text-[9px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
           votes
         </span>
       </div>
 
-      {/* Post body */}
-      <div className="min-w-0 flex-1 px-3.5 py-2.5">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12.5px]">
+      {/* Body */}
+      <div className="min-w-0 flex-1 pr-1">
+        {/* Meta — college badge + name, category, time */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           {item.is_pinned && (
             <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
               <IconPin className="h-3.5 w-3.5" /> Pinned
             </span>
           )}
           {collegeName && (
-            <span className="font-semibold text-zinc-700 dark:text-zinc-200">
-              {collegeName}
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-surface2 px-1.5 py-0.5">
+              <span className="flex h-4 w-4 items-center justify-center rounded-[4px] bg-accent text-[8px] font-bold text-white">
+                {initialsFor(collegeName)}
+              </span>
+              <span className="text-[12px] font-semibold text-foreground">{collegeName}</span>
             </span>
           )}
           {categoryName && (
-            <span className="text-zinc-500 dark:text-zinc-400">
+            <span className={`${metaItem} inline-flex items-center gap-1`}>
               {isMess ? "🍽 " : ""}
               {categoryName}
             </span>
           )}
-          <span aria-hidden className="text-zinc-300 dark:text-zinc-600">·</span>
-          <span className="text-zinc-500 dark:text-zinc-400">{timeAgo(item.created_at)}</span>
+          <span aria-hidden className={metaItem}>
+            ·{timeAgo(item.created_at)}
+          </span>
         </div>
 
-        <p className="mt-1 text-[15px] font-semibold leading-snug text-foreground">
+        {/* Title */}
+        <Link
+          href={href}
+          onClick={(e) => e.stopPropagation()}
+          className="mt-1.5 block text-[15px] font-semibold leading-snug text-foreground transition group-hover:text-accent-ink"
+        >
           {item.title}
-        </p>
+        </Link>
 
         {item.description && (
-          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-400">
             {item.description}
           </p>
         )}
 
-        {(meal || hasPhotos) && (
-          <div className="mt-1.5 flex items-center gap-2 text-[12px] text-zinc-500 dark:text-zinc-400">
-            {meal && <span className="rounded-md bg-surface2 px-1.5 py-0.5 font-medium text-zinc-600 dark:text-zinc-300">{meal}</span>}
-            {hasPhotos && <span aria-label="Has photos">📷</span>}
+        {(meal || photos.length > 0) && (
+          <div className="mt-1.5 flex items-center gap-2 text-[12px] text-muted">
+            {meal && (
+              <span className="rounded-md bg-surface2 px-1.5 py-0.5 font-medium text-zinc-600 dark:text-zinc-300">
+                {meal}
+              </span>
+            )}
+            {photos.length > 0 && (
+              <span className="flex items-center gap-1.5">
+                {photos.slice(0, 3).map((p) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={p}
+                    src={p}
+                    alt=""
+                    loading="lazy"
+                    className="h-10 w-10 rounded-md border border-border object-cover"
+                  />
+                ))}
+              </span>
+            )}
           </div>
         )}
 
         {/* Action row */}
-        <div className="mt-2 flex items-center gap-4 text-[12.5px] text-zinc-500 dark:text-zinc-400">
-          <span className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 transition hover:bg-surface2">
-            <MessageCircle className="h-[15px] w-[15px]" />
+        <div className="mt-2 flex items-center gap-2 text-[12.5px] text-muted">
+          <Link
+            href={href}
+            onClick={(e) => e.stopPropagation()}
+            className="tap inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-medium transition hover:bg-surface2 hover:text-foreground"
+          >
+            <IconMessageSquare className="h-[15px] w-[15px]" />
             {commentCount} {commentCount === 1 ? "comment" : "comments"}
-          </span>
-          <span className="sm:hidden inline-flex items-center gap-1 rounded-md px-1.5 py-0.5">
-            <IconArrowUp className="h-3.5 w-3.5" />
+          </Link>
+
+          <button
+            type="button"
+            className="tap inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium sm:hidden"
+          >
+            <IconArrowUp className="h-[15px] w-[15px]" />
             {item.upvote_count}
-          </span>
+          </button>
+
+          <SaveAction complaintId={item.id} />
+          <ShareAction href={href} title={item.title} />
         </div>
       </div>
-    </Link>
+    </article>
+  );
+}
+
+function SaveAction({ complaintId }: { complaintId: string }) {
+  return (
+    <span onClick={(e) => e.stopPropagation()}>
+      <SaveButton complaintId={complaintId} />
+    </span>
+  );
+}
+
+function ShareAction({ href, title }: { href: string; title: string }) {
+  return (
+    <span onClick={(e) => e.stopPropagation()}>
+      <ShareMenu href={href} title={title} />
+    </span>
   );
 }

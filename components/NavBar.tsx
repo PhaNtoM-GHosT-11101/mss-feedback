@@ -1,15 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "./theme-provider";
-import { IconHome, IconProfile, IconArrowUp } from "./icons";
-
-const tabs = [
-  { href: "/", label: "Home", Icon: IconHome },
-  { href: "/profile", label: "Profile", Icon: IconProfile },
-];
+import { ReverbLogo } from "./ReverbMark";
+import { IconHome, IconProfile, IconPlus, IconSearch } from "./icons";
 
 export function Wordmark({
   compact = false,
@@ -20,22 +16,49 @@ export function Wordmark({
   institutionName?: string;
   tagline?: string | null;
 }) {
+  return <ReverbLogo compact={compact} institutionName={institutionName} tagline={tagline} />;
+}
+
+function SearchBox() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [q, setQ] = useState("");
+  const [focused, setFocused] = useState(false);
+  const [prevPath, setPrevPath] = useState(pathname);
+
+  if (prevPath !== pathname) {
+    setPrevPath(pathname);
+    if (q) setQ("");
+  }
+
   return (
-    <span className="flex items-center gap-2.5">
-      <span className="flex h-8 w-8 items-center justify-center rounded-[0.6rem] bg-accent shadow-[0_2px_8px_-2px_rgb(255_69_0/0.55)]">
-        <IconArrowUp className="h-4 w-4 text-white" strokeWidth={2.6} />
-      </span>
-      {!compact && (
-        <span className="flex flex-col leading-none">
-          <span className="text-[15px] font-bold tracking-tight text-foreground">
-            {institutionName ?? "Campus Feedback"}
-          </span>
-          <span className="mt-0.5 text-[10.5px] font-medium text-muted">
-            {tagline || (institutionName ? "Public suggestion box" : "Say it, it gets heard")}
-          </span>
-        </span>
-      )}
-    </span>
+    <div
+      className={`hidden flex-1 justify-center md:flex ${
+        focused ? "scale-[1.01]" : ""
+      }`}
+      style={{ transition: "transform .15s ease" }}
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const term = q.trim();
+          if (!term) return;
+          router.push(`/search?q=${encodeURIComponent(term)}`);
+          setQ("");
+        }}
+        className="relative w-full max-w-sm"
+      >
+        <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder="Search complaints across campuses…"
+          className="h-9 w-full rounded-lg border border-border bg-surface2/70 pl-9 pr-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:bg-surface focus:shadow-[0_0_0_3px_rgb(79_70_229/0.15)]"
+        />
+      </form>
+    </div>
   );
 }
 
@@ -52,157 +75,147 @@ export default function NavBar({
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
+    const onScroll = () => setScrolled(window.scrollY > 6);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const onBoards = pathname === "/";
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
     <>
-      {/* ============ Desktop sidebar ============ */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border bg-background/80 backdrop-blur-xl md:flex">
-        <div className="border-b border-border/80 px-5 pb-4 pt-7">
+      {/* ============ App bar (top, all viewports ============ */}
+      <header
+        className={`sticky top-0 z-40 border-b border-border/80 transition-all duration-300 ${
+          scrolled
+            ? "bg-background/85 shadow-[0_4px_18px_-12px_rgb(0_0_0/0.18)] backdrop-blur-xl"
+            : "bg-background/60 backdrop-blur-lg"
+        }`}
+      >
+        <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-4 md:gap-5">
           {/* Full document navigation — board pages live server-side behind a rewrite */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a href="/" className="inline-block">
-            <Wordmark institutionName={institutionName} tagline={tagline} />
-          </a>
-        </div>
-
-        <div className="px-5 pb-1 pt-4">
-          <p className="section-label">Feeds</p>
-        </div>
-
-        <nav className="flex flex-1 flex-col gap-1 px-3">
-          {tabs.map((t) => {
-            const active = isActive(t.href);
-            const common = `tap group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
-              active
-                ? "bg-accent-soft text-accent-ink"
-                : "text-muted hover:bg-surface2 hover:text-foreground"
-            }`;
-            const icon = (
-              <t.Icon
-                className={`h-[18px] w-[18px] ${active ? "text-accent-strong" : "text-muted group-hover:text-foreground"}`}
-                strokeWidth={active ? 2.4 : 1.9}
-              />
-            );
-            const strip = (
-              <span
-                aria-hidden
-                className={`absolute -left-2 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-accent transition-opacity ${
-                  active ? "opacity-100" : "opacity-0"
-                }`}
-              />
-            );
-            const label = <>{t.label}</>;
-            return t.href === "/" ? (
-              <a key={t.href} href={t.href} className={common}>
-                {strip}
-                {icon}
-                {label}
-              </a>
+          <a href="/" className="inline-block" aria-label="REVERB home">
+            {onBoards ? (
+              <>
+                <span className="hidden sm:block">
+                  <ReverbLogo compact={scrolled} />
+                </span>
+                <span className="sm:hidden">
+                  <ReverbLogo compact />
+                </span>
+              </>
             ) : (
-              <Link key={t.href} href={t.href} className={common}>
-                {strip}
-                {icon}
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
+              <>
+                <span className="hidden sm:block">
+                  <ReverbLogo compact institutionName={institutionName} tagline={tagline} />
+                </span>
+                <span className="sm:hidden">
+                  <ReverbLogo compact />
+                </span>
+              </>
+            )}
+          </a>
 
-        <div className="border-t border-border px-3 py-4">
-          <div className="flex items-center justify-between px-2">
-            <ThemeToggle />
+          <SearchBox />
+
+          <div className="ml-auto flex items-center gap-2">
             <Link
+              href="/search"
+              className="tap flex h-9 w-9 items-center justify-center rounded-lg text-muted transition hover:bg-surface2 hover:text-foreground md:hidden"
+              aria-label="Search"
+            >
+              <IconSearch className="h-[18px] w-[18px]" />
+            </Link>
+
+            <ThemeToggle />
+
+            <Link
+              href="/complaints/new"
+              className="tap btn btn-primary hidden h-9 items-center gap-1.5 px-3.5 py-0 text-[13px] sm:inline-flex"
+            >
+              <IconPlus className="h-4 w-4" strokeWidth={2.4} />
+              File complaint
+            </Link>
+
+            {/* Full document navigation — profile is reachable from any board */}
+            <a
               href="/profile"
               className="tap flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-ink transition hover:brightness-95"
               aria-label="Profile"
             >
               {(userName ?? "?")[0]?.toUpperCase()}
-            </Link>
-          </div>
-        </div>
-      </aside>
-
-      {/* ============ Mobile header (smart shrink) ============ */}
-      <header
-        className={`sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-md transition-all duration-300 md:hidden ${
-          scrolled ? "py-1.5" : "py-2.5"
-        }`}
-      >
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-4">
-          {/* Full document navigation — board pages live server-side behind a rewrite */}
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a href="/" className={scrolled ? "scale-95" : ""} style={{ transition: "transform .3s ease" }}>
-            <Wordmark compact={scrolled} institutionName={institutionName} tagline={tagline} />
-          </a>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Link
-              href="/profile"
-              className="tap flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-xs font-bold text-accent-ink"
-              aria-label="Profile"
-            >
-              {(userName ?? "?")[0]?.toUpperCase()}
-            </Link>
+            </a>
           </div>
         </div>
       </header>
 
-      {/* ============ Mobile bottom nav ============ */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
-        <div className="mx-auto grid max-w-2xl grid-cols-2">
-          {tabs.map((t) => {
-            const active = isActive(t.href);
-            const icon = (
-              <t.Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.4 : 1.8} />
-            );
-            const inner = (
-              <>
-                <span
-                  className={`flex h-7 w-12 items-center justify-center rounded-full transition ${
-                    active ? "bg-accent-soft" : ""
-                  }`}
-                >
-                  {icon}
-                </span>
-                {t.label}
-              </>
-            );
-            const common = `tap flex flex-col items-center gap-1 py-2 text-[10px] font-semibold tracking-wide transition ${
-              active ? "text-accent-ink" : "text-muted hover:text-foreground"
-            }`;
-            return t.href === "/" ? (
-              <a key={t.href} href={t.href} className={common}>
-                {inner}
-              </a>
-            ) : (
-              <Link key={t.href} href={t.href} className={common}>
-                {inner}
-              </Link>
-            );
-          })}
+      {/* spacer to absorb the fixed/sticky chrome */}
+      <div className="h-0" />
+
+      {/* ============ Mobile bottom nav — Home / Post / Profile ============ */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
+        <div className="mx-auto grid max-w-2xl grid-cols-3">
+          {/* Full document navigation — board pages live server-side behind a rewrite */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a
+            href="/"
+            className={`tap flex flex-col items-center gap-1 py-2.5 text-[10px] font-semibold tracking-wide transition ${
+              isActive("/") ? "text-accent-ink" : "text-muted hover:text-foreground"
+            }`}
+          >
+            <span
+              className={`flex h-7 w-12 items-center justify-center rounded-full transition ${
+                isActive("/") ? "bg-accent-soft" : ""
+              }`}
+            >
+              <IconHome className="h-[18px] w-[18px]" strokeWidth={isActive("/") ? 2.4 : 1.8} />
+            </span>
+            Home
+          </a>
+
+          <Link
+            href="/complaints/new"
+            className={`tap flex flex-col items-center gap-1 py-2.5 text-[10px] font-semibold tracking-wide transition ${
+              pathname === "/complaints/new" ? "text-accent-ink" : "text-muted hover:text-foreground"
+            }`}
+          >
+            <span
+              className={`flex h-7 w-12 items-center justify-center rounded-full transition ${
+                pathname === "/complaints/new" ? "bg-accent-soft" : ""
+              }`}
+            >
+              <IconPlus className="h-[18px] w-[18px]" strokeWidth={pathname === "/complaints/new" ? 2.4 : 1.8} />
+            </span>
+            Post
+          </Link>
+
+          <Link
+            href="/profile"
+            className={`tap flex flex-col items-center gap-1 py-2.5 text-[10px] font-semibold tracking-wide transition ${
+              isActive("/profile") ? "text-accent-ink" : "text-muted hover:text-foreground"
+            }`}
+          >
+            <span
+              className={`flex h-7 w-12 items-center justify-center rounded-full transition ${
+                isActive("/profile") ? "bg-accent-soft" : ""
+              }`}
+            >
+              <IconProfile className="h-[18px] w-[18px]" strokeWidth={isActive("/profile") ? 2.4 : 1.8} />
+            </span>
+            Profile
+          </Link>
         </div>
       </nav>
 
       {/* spacer for the fixed mobile bottom nav */}
       <div
         className="md:hidden"
-        style={{ height: "calc(4rem + env(safe-area-inset-bottom))" }}
+        style={{ height: "calc(4.25rem + env(safe-area-inset-bottom))" }}
       />
     </>
   );
-}
-
-export function getTabLabel(pathname: string): string | null {
-  const tab = tabs.find((t) =>
-    t.href === "/" ? pathname === "/" : pathname.startsWith(t.href),
-  );
-  return tab?.label ?? null;
 }
